@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://dir5y0rb0f7ux"]
+
+[ext_resource type="Script" uid="uid://blgv0q4pc3u2b" path="res://scripts/player.gd" id="1_3vyb7"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_qhqgy"]
+
+[node name="Player" type="CharacterBody3D" unique_id=1854722376]
+script = ExtResource("1_3vyb7")
+
+[node name="Head" type="Node3D" parent="." unique_id=1971699787]
+
+[node name="Camera3D" type="Camera3D" parent="Head" unique_id=917607162]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 2.9802322e-08, 0, -2.9802322e-08, 1, 0, 0.7281365, -0.2174685)
+current = true
+fov = 90.0
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="Head" unique_id=400821456]
+transform = Transform3D(0.77262527, 0, 0, 0, 0.34440064, 0, 0, 0, 0.34243274, 0, 0.6499839, -0.3560543)
+mesh = SubResource("BoxMesh_3vyb7")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=108827502]
+shape = SubResource("CapsuleShape3D_g2els")
+
+[node name="VoxelViewer" type="VoxelViewer" parent="." unique_id=698664713]
+
+[node name="Skin" type="Node3D" parent="." unique_id=1890228174]
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="Skin" unique_id=1099768263]
+mesh = SubResource("CapsuleMesh_qhqgy")

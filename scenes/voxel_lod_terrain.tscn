@@ -1,0 +1,131 @@
+[gd_scene load_steps=8 format=3 uid="uid://bxlk62ylx5uy8"]
+
+[sub_resource type="Shader" id="Shader_e5uuo"]
+code = "shader_type spatial;
+
+varying vec3 world_pos;
+
+void vertex() {
+    world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	vec3 grass = vec3(0.3, 0.5, 0.2);
+	vec3 rock = vec3(0.45, 0.45, 0.45);
+	float t = smoothstep(1.5, 2.5, world_pos.y);
+	ALBEDO = mix(grass, rock, t);
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_nnsk1"]
+render_priority = 0
+shader = SubResource("Shader_e5uuo")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4wyf3"]
+seed = 345634
+frequency = 0.012
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_rwgxs"]
+seed = 5633
+frequency = 0.009
+fractal_type = 2
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_nnsk1"]
+seed = 774563
+frequency = 0.004
+
+[sub_resource type="VoxelGeneratorGraph" id="VoxelGeneratorGraph_nnsk1"]
+graph_data = {
+"connections": [[35, 0, 29, 0], [22, 0, 24, 0], [22, 0, 25, 0], [22, 0, 26, 0], [23, 0, 26, 1], [23, 0, 25, 1], [23, 0, 24, 1], [24, 0, 27, 0], [25, 0, 35, 0], [26, 0, 30, 0], [27, 0, 28, 0], [28, 0, 32, 1], [29, 0, 31, 0], [30, 0, 31, 1], [31, 0, 28, 1], [32, 0, 34, 0], [33, 0, 32, 0]],
+"nodes": {
+"22": {
+"auto_connect": false,
+"gui_position": Vector2(320, 80),
+"type": "InputX"
+},
+"23": {
+"auto_connect": false,
+"gui_position": Vector2(320, 160),
+"type": "InputZ"
+},
+"24": {
+"auto_connect": true,
+"gui_position": Vector2(700, 20),
+"noise": SubResource("FastNoiseLite_4wyf3"),
+"type": "Noise2D"
+},
+"25": {
+"auto_connect": true,
+"gui_position": Vector2(620, 140),
+"noise": SubResource("FastNoiseLite_rwgxs"),
+"type": "Noise2D"
+},
+"26": {
+"auto_connect": true,
+"gui_position": Vector2(700, 260),
+"noise": SubResource("FastNoiseLite_nnsk1"),
+"type": "Noise2D"
+},
+"27": {
+"auto_connect": false,
+"b": 4.0,
+"gui_position": Vector2(920, 20),
+"type": "Multiply"
+},
+"28": {
+"auto_connect": false,
+"gui_position": Vector2(1340, 20),
+"type": "Add"
+},
+"29": {
+"auto_connect": false,
+"b": 50.0,
+"gui_position": Vector2(920, 140),
+"type": "Multiply"
+},
+"30": {
+"auto_connect": false,
+"edge0": -0.2,
+"edge1": 0.3,
+"gui_position": Vector2(920, 260),
+"type": "Smoothstep"
+},
+"31": {
+"auto_connect": false,
+"gui_position": Vector2(1120, 180),
+"type": "Multiply"
+},
+"32": {
+"auto_connect": false,
+"gui_position": Vector2(1540, 20),
+"type": "Subtract"
+},
+"33": {
+"auto_connect": false,
+"gui_position": Vector2(1380, 160),
+"type": "InputY"
+},
+"34": {
+"auto_connect": true,
+"gui_position": Vector2(1740, 20),
+"type": "OutputSDF"
+},
+"35": {
+"auto_connect": false,
+"gui_position": Vector2(740, 140),
+"max0": 1.0,
+"max1": 1.0,
+"min0": -1.0,
+"min1": 0.0,
+"type": "Remap"
+}
+},
+"version": 2
+}
+
+[sub_resource type="VoxelMesherTransvoxel" id="VoxelMesherTransvoxel_nnsk1"]
+
+[node name="VoxelLodTerrain" type="VoxelLodTerrain"]
+material = SubResource("ShaderMaterial_nnsk1")
+generator = SubResource("VoxelGeneratorGraph_nnsk1")
+mesher = SubResource("VoxelMesherTransvoxel_nnsk1")
+gi_mode = 1

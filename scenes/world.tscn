@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://n40c44khpb7b"]
+
+[ext_resource type="PackedScene" uid="uid://dir5y0rb0f7ux" path="res://scenes/player.tscn" id="1_nnsk1"]
+[ext_resource type="PackedScene" uid="uid://b2qtey7421crf" path="res://scenes/terrain.tscn" id="2_rwgxs"]
+[ext_resource type="PackedScene" uid="uid://d3jr60li8d5eo" path="res://models/tower/TowerNew.glb" id="3_4wyf3"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_e5uuo"]
+sky_top_color = Color(0.5285261, 0.75772786, 0.9690928, 1)
+sky_horizon_color = Color(9.62615e-07, 0.44471583, 0.68174815, 1)
+ground_bottom_color = Color(0, 0, 0, 1)
+ground_horizon_color = Color(0.6035632, 0.8165141, 0.94630224, 1)
+
+[sub_resource type="Sky" id="Sky_nnsk1"]
+sky_material = SubResource("ProceduralSkyMaterial_e5uuo")
+
+[sub_resource type="Environment" id="Environment_rwgxs"]
+background_mode = 2
+sky = SubResource("Sky_nnsk1")
+tonemap_mode = 2
+
+[node name="World" type="Node3D" unique_id=800657313]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1897837579]
+environment = SubResource("Environment_rwgxs")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=425829392]
+transform = Transform3D(0.48303786, -0.11968025, 0.8673817, 0.013692215, 0.9915261, 0.12918448, -0.87549233, -0.050524607, 0.48058334, 0, 66.29329, 0)
+shadow_enabled = true
+
+[node name="player" parent="." unique_id=395011495 instance=ExtResource("1_nnsk1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.77614, 32.239025, -257.51917)
+gravity = 29.4
+jump_velocity = 9.0
+
+[node name="terrain" parent="." unique_id=609053471 instance=ExtResource("2_rwgxs")]
+
+[node name="TowerNew" parent="." unique_id=876305968 instance=ExtResource("3_4wyf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255, 0, -255)
+
+[editable path="TowerNew"]

@@ -10,6 +10,8 @@
 
 [node name="Player" type="CharacterBody3D" unique_id=1854722376]
 script = ExtResource("1_3vyb7")
+speed = 4.0
+sprint_speed = 8.0
 
 [node name="Head" type="Node3D" parent="." unique_id=1971699787]
 
@@ -19,6 +21,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 2.9802322e-08, 0, -2.9802322e-08, 1, 0, 0
 cull_mask = 1048573
 current = true
 fov = 90.0
+far = 3000.0
 
 [node name="CSGMesh3D2" type="CSGMesh3D" parent="Head" unique_id=400821456]
 transform = Transform3D(0.77262527, 0, 0, 0, 0.34440064, 0, 0, 0, 0.34243274, 0, 0.6499839, -0.3560543)

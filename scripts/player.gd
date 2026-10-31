@@ -13,7 +13,7 @@ extends CharacterBody3D
 
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
-@onready var bob_time : float
+var bob_time : float
 @onready var camera_start_position = camera.position
 
 
@@ -70,11 +70,11 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 
 func head_bob(delta: float) -> void:
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
-		bob_time += delta * 7
-		var bobbing_amount = sin(bob_time) * 0.025
+		bob_time += delta * 10
+		var bobbing_amount = sin(bob_time) * 0.05
 		camera.position.y = camera_start_position.y + bobbing_amount
 	else: 
-		camera.position.y = camera_start_position.y
+		camera.position.y = lerp(camera.position.y, camera_start_position.y, 5 * delta)
 
 func camera_lean(delta: float) -> void:
 	var input_dir : Vector2 = Input.get_vector(
@@ -86,3 +86,11 @@ func camera_lean(delta: float) -> void:
 	var target_lean = -input_dir.x * 0.05
 	var current_lean = camera.rotation.z
 	camera.rotation.z = lerp(current_lean, target_lean, 5 * delta)
+
+#func idle_sway(delta: float) -> void:
+#	if is_on_floor() and Vector2(velocity.x, velocity.z).length() == 0:
+#		bob_time += delta * 1
+#		var sway_amount = sin(bob_time) * 0.01
+#		camera.position.x = camera_start_position.x + sway_amount
+#	else:
+#		camera.position.x = lerp(camera.position.x, camera_start_position.x, 5 * delta)

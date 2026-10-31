@@ -26,6 +26,41 @@ enabled=PackedStringArray("res://addons/terrain_3d/plugin.cfg")
 
 import/blender/enabled=false
 
+[importer_defaults]
+
+MeshLibrary={
+"_subresources": {},
+"animation/fps": 30,
+"animation/import": true,
+"animation/import_rest_as_RESET": false,
+"animation/remove_immutable_tracks": true,
+"animation/trimming": false,
+"array_mesh/deduplicate_surfaces": true,
+"gltf/embedded_image_handling": 1,
+"gltf/naming_version": 2,
+"gltf/texture_map_mode": 1,
+"import_script/path": "",
+"materials/extract": 0,
+"materials/extract_format": 0,
+"materials/extract_path": "",
+"mesh_library/use_node_names_as_mesh_names": false,
+"meshes/create_shadow_meshes": true,
+"meshes/ensure_tangents": true,
+"meshes/force_disable_compression": false,
+"meshes/generate_lods": true,
+"meshes/light_baking": 1,
+"meshes/lightmap_texel_size": 0.2,
+"nodes/apply_root_scale": true,
+"nodes/import_as_skeleton_bones": false,
+"nodes/root_name": "",
+"nodes/root_scale": 1.0,
+"nodes/root_script": null,
+"nodes/root_type": "",
+"nodes/use_name_suffixes": true,
+"nodes/use_node_type_suffixes": true,
+"skins/use_named_skins": true
+}
+
 [input]
 
 left_click={
@@ -63,3 +98,7 @@ sprint={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194325,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+
+[rendering]
+
+mesh_lod/lod_change/threshold_pixels=0.2

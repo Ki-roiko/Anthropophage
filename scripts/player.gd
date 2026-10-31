@@ -6,8 +6,13 @@ extends CharacterBody3D
 @export var sprint_speed : float = 16.0
 @export var gravity : float = 9.8
 @export var jump_velocity : float = 4.5
+@export_group("Camera")
+@export var standart_fov : float = 70.0
+@export var sprint_fov : float = 90.0
+@export var fov_change_speed : float = 5.0
 
 @onready var head : Node3D = $Head
+@onready var camera : Camera3D = $Head/Camera3D
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -18,15 +23,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	moving(delta)
+	fov_change(delta)
 
 
 
 
 
-
-
-
-
+func fov_change (delta: float) -> void:
+	if Vector2(velocity.x, velocity.z).length() > 0 and Input.is_action_pressed("sprint"):
+		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
+	else:
+		camera.fov = lerp(camera.fov, standart_fov, fov_change_speed * delta)
 
 func moving(delta: float) -> void:
 	var input_dir : Vector2 = Input.get_vector(
@@ -55,3 +62,5 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 	rotate_y(-event.relative.x * mouse_sensitivity)
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
 	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
+
+func 

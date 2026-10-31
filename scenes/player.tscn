@@ -28,8 +28,6 @@ mesh = SubResource("BoxMesh_3vyb7")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=108827502]
 shape = SubResource("CapsuleShape3D_g2els")
 
-[node name="VoxelViewer" type="VoxelViewer" parent="." unique_id=698664713]
-
 [node name="Skin" type="Node3D" parent="." unique_id=1890228174]
 
 [node name="CSGMesh3D" type="CSGMesh3D" parent="Skin" unique_id=1099768263]

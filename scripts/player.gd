@@ -14,11 +14,21 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		head.rotate_x(-event.relative.y * mouse_sensitivity)
-		head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
+		mouse_look(event)
 
 func _physics_process(delta: float) -> void:
+	moving(delta)
+
+
+
+
+
+
+
+
+
+
+func moving(delta: float) -> void:
 	var input_dir : Vector2 = Input.get_vector(
 		"move_left",
 		"move_right",
@@ -40,3 +50,8 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 	
 	move_and_slide()
+
+func mouse_look(event: InputEventMouseMotion) -> void:
+	rotate_y(-event.relative.x * mouse_sensitivity)
+	head.rotate_x(-event.relative.y * mouse_sensitivity)
+	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)

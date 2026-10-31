@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="3d voxel"
-run/main_scene="uid://bdqxi541s0f3r"
+run/main_scene="uid://n40c44khpb7b"
 config/features=PackedStringArray("4.7", "Forward Plus")
 
 [blendkit]

@@ -9,11 +9,11 @@ extends CharacterBody3D
 @export_group("Camera")
 @export var standart_fov : float = 70.0
 @export var sprint_fov : float = 90.0
-@export var fov_change_speed : float = 5.0
+@export var fov_change_speed : float = 1
 
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
-
+@onready var bob_time : float
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -24,6 +24,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	moving(delta)
 	fov_change(delta)
+	head_bob(delta)
+	head_bob(delta)
 
 
 
@@ -63,4 +65,12 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
 	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
 
-func 
+func head_bob(delta: float) -> void:
+	var camera_start_position = camera.position
+	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
+		bob_time += delta * 5
+		var bobbing_amount = sin(bob_time) * 0.005
+		camera.position.y = camera_start_position.y + bobbing_amount
+	else: 
+		camera.position.y = camera_start_position.y
+

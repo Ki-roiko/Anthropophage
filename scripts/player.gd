@@ -7,13 +7,16 @@ extends CharacterBody3D
 @export var gravity : float = 9.8
 @export var jump_velocity : float = 4.5
 @export_group("Camera")
-@export var standart_fov : float = 70.0
+@export var standard_fov : float = 70.0
 @export var sprint_fov : float = 90.0
-@export var fov_change_speed : float = 1
+@export var fov_change_speed : float = 4
 
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var bob_time : float
+@onready var camera_start_position = camera.position
+
+
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -25,7 +28,7 @@ func _physics_process(delta: float) -> void:
 	moving(delta)
 	fov_change(delta)
 	head_bob(delta)
-	head_bob(delta)
+	camera_lean(delta)
 
 
 
@@ -35,7 +38,7 @@ func fov_change (delta: float) -> void:
 	if Vector2(velocity.x, velocity.z).length() > 0 and Input.is_action_pressed("sprint"):
 		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
 	else:
-		camera.fov = lerp(camera.fov, standart_fov, fov_change_speed * delta)
+		camera.fov = lerp(camera.fov, standard_fov, fov_change_speed * delta)
 
 func moving(delta: float) -> void:
 	var input_dir : Vector2 = Input.get_vector(
@@ -66,11 +69,20 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
 
 func head_bob(delta: float) -> void:
-	var camera_start_position = camera.position
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
-		bob_time += delta * 5
-		var bobbing_amount = sin(bob_time) * 0.005
+		bob_time += delta * 7
+		var bobbing_amount = sin(bob_time) * 0.025
 		camera.position.y = camera_start_position.y + bobbing_amount
 	else: 
 		camera.position.y = camera_start_position.y
 
+func camera_lean(delta: float) -> void:
+	var input_dir : Vector2 = Input.get_vector(
+		"move_left",
+		"move_right",
+		"move_forward",
+		"move_back"
+	).normalized()
+	var target_lean = -input_dir.x * 0.05
+	var current_lean = camera.rotation.z
+	camera.rotation.z = lerp(current_lean, target_lean, 5 * delta)

@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Texture2D" uid="uid://diqcijufkl7ps" path="res://textures/ui_temp/Double/Divider Fade/divider-fade-000.png" id="1_bg"]
+[ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/hp_bar.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://c8xp2x1uop8vv" path="res://textures/ui_temp/Double/Divider/divider-000.png" id="3_fill"]
+[ext_resource type="Script" uid="uid://bycmpigrvk3r2" path="res://scenes/ui/hp_bar.gd" id="4_script"]
+
+[sub_resource type="ShaderMaterial" id="StaminaShaderMaterial"]
+shader = ExtResource("2_shader")
+shader_parameter/progress = 1.0
+shader_parameter/progress_tail = 1.0
+shader_parameter/tail_color = Color(1, 0.32, 0.08, 1)
+
+[node name="StaminaBar" type="TextureRect"]
+offset_right = 192.0
+offset_bottom = 28.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("1_bg")
+script = ExtResource("4_script")
+value = 100.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 192.0
+offset_bottom = 28.0
+alignment = 1
+
+[node name="ProgressTextureRect" type="TextureRect" parent="HBoxContainer"]
+modulate = Color(1, 0.72, 0.22, 1)
+material = SubResource("StaminaShaderMaterial")
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("3_fill")

@@ -16,13 +16,13 @@ func _ready() -> void:
 	update_texture(0.0)
 
 
-func set_value(new_value: float) -> void:
+func set_value(new_value: float, animate: bool = true) -> void:
 	var clamped_value := clampf(new_value, min_value, max_value)
 	var direction := signf(clamped_value - value)
 	value = clamped_value
 
 	if progress_shader:
-		update_texture(direction)
+		update_texture(direction if animate else 0.0)
 
 
 func update_texture(direction: float) -> void:
@@ -31,7 +31,7 @@ func update_texture(direction: float) -> void:
 
 	var value_range := max_value - min_value
 	if value_range <= 0.0:
-		push_warning("HpBar: max_value must be greater than min_value.")
+		push_warning("StatBar: max_value must be greater than min_value.")
 		return
 
 	var progress := clampf((value - min_value) / value_range, 0.0, 1.0)

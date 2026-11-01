@@ -144,12 +144,14 @@ func moving(delta: float) -> void:
 	var stamina_before := current_stamina
 	var sprint_requested := Input.is_action_pressed("sprint") and input_dir.length() > 0.0
 	var current_speed: float = speed
+	var normal_sprint_speed := lerpf(speed, sprint_speed, 0.7)
+	var exhaustion_speed := lerpf(speed, normal_sprint_speed, 0.5)
 	is_sprinting = false
 
 	if sprint_requested:
 		if current_stamina > 0.0:
 			is_sprinting = true
-			current_speed = lerpf(speed, sprint_speed, 0.7)
+			current_speed = normal_sprint_speed
 
 			var drain_rate := max_stamina / maxf(sprint_duration, 0.001)
 			current_stamina = maxf(current_stamina - drain_rate * delta, 0.0)
@@ -159,7 +161,7 @@ func moving(delta: float) -> void:
 				exhaustion_time_left = exhaustion_duration
 		elif exhaustion_time_left > 0.0:
 			is_sprinting = true
-			current_speed = lerpf(speed, sprint_speed, 0.5)
+			current_speed = exhaustion_speed
 			exhaustion_time_left = maxf(exhaustion_time_left - delta, 0.0)
 	else:
 		exhaustion_time_left = 0.0
@@ -169,7 +171,7 @@ func moving(delta: float) -> void:
 			current_stamina = minf(current_stamina + recovery_rate * delta, max_stamina)
 
 	if not is_equal_approx(stamina_before, current_stamina):
-		stamina_bar.call("set_value", current_stamina, false)
+		stamina_bar.call("set_value", current_stamina)
 
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	velocity.x = direction.x * current_speed

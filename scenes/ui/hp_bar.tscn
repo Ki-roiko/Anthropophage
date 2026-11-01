@@ -1,0 +1,36 @@
+[gd_scene format=3 uid="uid://fhwlxigmdri1"]
+
+[ext_resource type="Texture2D" uid="uid://diqcijufkl7ps" path="res://textures/ui_temp/Double/Divider Fade/divider-fade-000.png" id="1_wupjp"]
+[ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/hp_bar.gdshader" id="2_8pvdg"]
+[ext_resource type="Texture2D" uid="uid://c8xp2x1uop8vv" path="res://textures/ui_temp/Double/Divider/divider-000.png" id="2_sxha3"]
+[ext_resource type="Script" uid="uid://bycmpigrvk3r2" path="res://scenes/ui/hp_bar.gd" id="2_vtg2q"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0cgy1"]
+shader = ExtResource("2_8pvdg")
+shader_parameter/progress = 1.0
+shader_parameter/progress_tail = 1.0
+shader_parameter/tail_color = Color(0, 0.53826, 0.99155694, 1)
+
+[node name="HpBar" type="TextureRect" unique_id=269408800]
+offset_right = 192.0
+offset_bottom = 28.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("1_wupjp")
+script = ExtResource("2_vtg2q")
+min_value = null
+max_value = null
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=2025513798]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer" unique_id=284305080]
+modulate = Color(6.738305e-07, 0.7176121, 0.5738505, 1)
+material = SubResource("ShaderMaterial_0cgy1")
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("2_sxha3")

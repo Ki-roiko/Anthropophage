@@ -18,6 +18,11 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 
 downloads/model_format="gltf_godot"
 
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/terrain_3d/plugin.cfg")

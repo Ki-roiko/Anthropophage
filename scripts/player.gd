@@ -39,8 +39,8 @@ func sprint_effect(delta: float) -> void:
 	if Vector2(velocity.x, velocity.z).length() > 0 and Input.is_action_pressed("sprint"):
 		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
 
-		camera_sprint_lean(delta, lerp(0.5, 13.0, 0.7), lerp(0.0002, 0.01, 0.7))
-		head_sprint_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5)
+		camera_move_lean(delta, lerp(0.5, 13.0, 0.7), lerp(0.0002, 0.01, 0.7))
+		head_move_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5)
 		#head_bob(delta, 2, 0.01, 5)
 
 		camera.position = Vector3(
@@ -60,7 +60,7 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 # функция для покачивания камеры при ходьбе
 func head_bob(delta: float, frequency: float, amplitude: float, weight: float) -> void:
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
-		camera_sprint_lean(delta, 5, 0.003)
+		camera_move_lean(delta, 5, 0.003)
 
 		bob_time += delta * frequency
 		var bobbing_amount = sin(bob_time) * amplitude
@@ -83,19 +83,22 @@ func camera_lean(delta: float) -> void:
 	camera.rotation.z = lerp(current_lean, target_lean, 5 * delta)
 
 # функция для наклона камеры при спринте
-func camera_sprint_lean(delta: float, frequency: float, amplitude: float) -> void:
+func camera_move_lean(delta: float, frequency: float, amplitude: float) -> void:
 	lean_time += delta * frequency
 	var lean_amount = pow(sin(lean_time), 7) * amplitude
 	camera.rotation.z = camera.rotation.z + lean_amount
 
 # функция для покачивания камеры при спринте
-func head_sprint_bob(delta: float, frequency: float, amplitude: float, weight: float) -> void:
+func head_move_bob(delta: float, frequency: float, amplitude: float, weight: float) -> void:
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
 		bob_time += delta * frequency
 		var bobbing_amount = clampf(sin(bob_time), -0.5, 0.5) * amplitude
 		camera.rotation.x = camera_start_rotation.x + bobbing_amount
 	else: 
 		camera.rotation.x = lerp(camera.rotation.x, camera_start_rotation.x, weight * delta)
+
+
+
 #func idle_sway(delta: float) -> void:
 #	if is_on_floor() and Vector2(velocity.x, velocity.z).length() == 0:
 #		bob_time += delta * 1

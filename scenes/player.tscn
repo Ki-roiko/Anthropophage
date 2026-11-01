@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dir5y0rb0f7ux"]
 
 [ext_resource type="Script" uid="uid://blgv0q4pc3u2b" path="res://scripts/player.gd" id="1_3vyb7"]
+[ext_resource type="PackedScene" path="res://scenes/ui/stamina_bar.tscn" id="2_stamina"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
 
@@ -36,3 +37,11 @@ shape = SubResource("CapsuleShape3D_g2els")
 [node name="CSGMesh3D" type="CSGMesh3D" parent="Skin" unique_id=1099768263]
 layers = 2
 mesh = SubResource("CapsuleMesh_qhqgy")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="StaminaBar" parent="HUD" instance=ExtResource("2_stamina")]
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 212.0
+offset_bottom = 88.0

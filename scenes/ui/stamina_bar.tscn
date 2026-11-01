@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Texture2D" uid="uid://diqcijufkl7ps" path="res://textures/ui_temp/Double/Divider Fade/divider-fade-000.png" id="1_bg"]
 [ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/hp_bar.gdshader" id="2_shader"]

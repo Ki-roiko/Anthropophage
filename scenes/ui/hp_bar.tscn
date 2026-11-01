@@ -18,8 +18,7 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = ExtResource("1_wupjp")
 script = ExtResource("2_vtg2q")
-min_value = null
-max_value = null
+value = 30.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=2025513798]
 layout_mode = 0
@@ -27,7 +26,7 @@ offset_right = 40.0
 offset_bottom = 40.0
 alignment = 1
 
-[node name="TextureRect" type="TextureRect" parent="HBoxContainer" unique_id=284305080]
+[node name="ProgressTextureRect" type="TextureRect" parent="HBoxContainer" unique_id=284305080]
 modulate = Color(6.738305e-07, 0.7176121, 0.5738505, 1)
 material = SubResource("ShaderMaterial_0cgy1")
 layout_mode = 2

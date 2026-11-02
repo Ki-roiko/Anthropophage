@@ -1,0 +1,808 @@
+From fe9dfbbc7615670b2311439958bd1629e6716d0d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 2 Nov 2026 23:12:20 +0300
+Subject: [PATCH] =?UTF-8?q?=D0=98=D1=81=D0=BF=D1=80=D0=B0=D0=B2=D0=B8?=
+ =?UTF-8?q?=D1=82=D1=8C=20=D0=BA=D0=BE=D0=BD=D1=82=D1=80=D0=BE=D0=BB=D0=BB?=
+ =?UTF-8?q?=D0=B5=D1=80=20=D0=B8=D0=B3=D1=80=D0=BE=D0=BA=D0=B0,=20UI-?=
+ =?UTF-8?q?=D1=88=D0=BA=D0=B0=D0=BB=D1=8B=20=D0=B8=20=D1=81=D1=82=D1=80?=
+ =?UTF-8?q?=D1=83=D0=BA=D1=82=D1=83=D1=80=D1=83=20=D0=BF=D1=80=D0=BE=D0=B5?=
+ =?UTF-8?q?=D0=BA=D1=82=D0=B0?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- player.gd: камера всегда возвращается в нейтраль, эффекты считаются
+  в _process и не зависят от FPS, исправлен бесконечный спринт через
+  быстрое отпускание Shift (sprint_locked), Esc освобождает мышь,
+  типизирована шкала выносливости, sprint_speed теперь реальная скорость
+- player.tscn: Head перенесён на высоту глаз (камера больше не качается
+  по дуге), CSGMesh3D заменены на MeshInstance3D
+- Настройки игрока собраны в одном месте (значения по умолчанию в скрипте)
+- hp_bar -> StatBar (stat_bar.gd/.gdshader), материалы local_to_scene,
+  убран шаг 0.1 у hint_range, у stamina_bar.tscn добавлен uid
+- project.godot: stretch mode canvas_items
+- Удалены мусорные файлы (.mtl с локальными путями, пустой tmp_ui,
+  дубликат divider-005.png), расширен .gitignore, добавлен README
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Jxy4kXzc9XdwHYw4FoNM7m
+---
+ .gitignore                                    |   8 +
+ README.md                                     |  30 ++
+ models/tower/Tower.mtl                        |  32 --
+ project.godot                                 |   2 +
+ scenes/player.tscn                            |  16 +-
+ scenes/ui/{hp_bar.tscn => health_bar.tscn}    |   7 +-
+ scenes/ui/stamina_bar.tscn                    |   7 +-
+ scenes/ui/{hp_bar.gd => stat_bar.gd}          |  14 +-
+ scenes/ui/{hp_bar.gd.uid => stat_bar.gd.uid}  |   0
+ .../ui/{hp_bar.gdshader => stat_bar.gdshader} |   2 +-
+ ...bar.gdshader.uid => stat_bar.gdshader.uid} |   0
+ scenes/ui/tmp_ui.tscn                         |  12 -
+ scenes/world.tscn                             |   2 -
+ scripts/player.gd                             | 293 +++++++++---------
+ textures/Water_Tower.mtl                      |   2 -
+ textures/divider-005.png                      | Bin 157 -> 0 bytes
+ textures/divider-005.png.import               |  40 ---
+ 17 files changed, 211 insertions(+), 256 deletions(-)
+ create mode 100644 README.md
+ delete mode 100644 models/tower/Tower.mtl
+ rename scenes/ui/{hp_bar.tscn => health_bar.tscn} (88%)
+ rename scenes/ui/{hp_bar.gd => stat_bar.gd} (67%)
+ rename scenes/ui/{hp_bar.gd.uid => stat_bar.gd.uid} (100%)
+ rename scenes/ui/{hp_bar.gdshader => stat_bar.gdshader} (81%)
+ rename scenes/ui/{hp_bar.gdshader.uid => stat_bar.gdshader.uid} (100%)
+ delete mode 100644 scenes/ui/tmp_ui.tscn
+ delete mode 100644 textures/Water_Tower.mtl
+ delete mode 100644 textures/divider-005.png
+ delete mode 100644 textures/divider-005.png.import
+
+diff --git a/.gitignore b/.gitignore
+index 3b16492..2ab23c5 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -2,3 +2,11 @@
+ .godot/
+ /android/
+ *.zip
++
++# Секреты экспорта и мусор редакторов/ОС
++export_credentials.cfg
++.DS_Store
++Thumbs.db
++.vscode/
++.idea/
++*.tmp
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..c6f8efc
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,30 @@
++# Anthropophage
++
++3D-игра от первого лица на Godot 4 (проект «3d voxel»).
++
++## Запуск
++
++1. Откройте `project.godot` в Godot (версия указана в `config/features` файла `project.godot`).
++2. Убедитесь, что включён плагин **Terrain3D** (*Project → Project Settings → Plugins*).
++3. Главная сцена — `scenes/world.tscn`.
++
++## Управление
++
++| Действие | Клавиша |
++|---|---|
++| Движение | W / A / S / D |
++| Прыжок | Space |
++| Спринт | Shift |
++| Освободить мышь | Esc (клик по окну возвращает захват) |
++
++## Структура
++
++- `scenes/` — сцены (мир, игрок, ландшафт, UI); `scenes/terrain_data/` — данные регионов Terrain3D
++- `scripts/player.gd` — контроллер игрока (движение, выносливость, эффекты камеры); все настройки задаются в его `@export`-переменных
++- `scenes/ui/stat_bar.gd` — универсальная шкала (`StatBar`) для здоровья и выносливости
++- `addons/` — Terrain3D и Zylann Voxel Tools (GDExtension)
++- `models/`, `textures/` — ассеты
++
++## Лицензии
++
++Лицензии сторонних плагинов лежат в `addons/*`. Проверьте лицензии ассетов в `textures/ui_temp` и `models/nature`.
+diff --git a/models/tower/Tower.mtl b/models/tower/Tower.mtl
+deleted file mode 100644
+index f70ae03..0000000
+--- a/models/tower/Tower.mtl
++++ /dev/null
+@@ -1,32 +0,0 @@
+-# Blender 4.4.0 MTL File: 'None'
+-# www.blender.org
+-
+-newmtl Material.001
+-Ns 0.000000
+-Ka 1.000000 1.000000 1.000000
+-Ks 0.500000 0.500000 0.500000
+-Ke 0.000000 0.000000 0.000000
+-Ni 1.500000
+-d 1.000000
+-illum 2
+-map_Kd D:/game/Новая папка (7)/Texture2D/concrete1.jpg
+-
+-newmtl Material.002
+-Ns 0.000000
+-Ka 1.000000 1.000000 1.000000
+-Ks 0.500000 0.500000 0.500000
+-Ke 0.000000 0.000000 0.000000
+-Ni 1.500000
+-illum 2
+-map_Kd D:/game/Новая папка (7)/Texture2D/decals/ConcreteDecal.png
+-map_d D:/game/Новая папка (7)/Texture2D/decals/ConcreteDecal.png
+-
+-newmtl Material.003
+-Ns 0.000000
+-Ka 1.000000 1.000000 1.000000
+-Ks 0.500000 0.500000 0.500000
+-Ke 0.000000 0.000000 0.000000
+-Ni 1.500000
+-d 1.000000
+-illum 2
+-map_Kd D:/game/Новая папка (7)/Texture2D/Concrete_Damaged.png
+diff --git a/project.godot b/project.godot
+index c026c69..dd418f3 100644
+--- a/project.godot
++++ b/project.godot
+@@ -22,6 +22,8 @@ downloads/model_format="gltf_godot"
+ 
+ window/size/viewport_width=1920
+ window/size/viewport_height=1080
++window/stretch/mode="canvas_items"
++window/stretch/aspect="expand"
+ 
+ [editor_plugins]
+ 
+diff --git a/scenes/player.tscn b/scenes/player.tscn
+index da9343c..e2acb85 100644
+--- a/scenes/player.tscn
++++ b/scenes/player.tscn
+@@ -1,7 +1,7 @@
+ [gd_scene format=3 uid="uid://dir5y0rb0f7ux"]
+ 
+ [ext_resource type="Script" uid="uid://blgv0q4pc3u2b" path="res://scripts/player.gd" id="1_3vyb7"]
+-[ext_resource type="PackedScene" path="res://scenes/ui/stamina_bar.tscn" id="2_stamina"]
++[ext_resource type="PackedScene" uid="uid://c4s7taminab4r" path="res://scenes/ui/stamina_bar.tscn" id="2_stamina"]
+ 
+ [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
+ 
+@@ -11,21 +11,19 @@
+ 
+ [node name="Player" type="CharacterBody3D" unique_id=1854722376]
+ script = ExtResource("1_3vyb7")
+-speed = 4.0
+-sprint_speed = 8.0
+ 
+ [node name="Head" type="Node3D" parent="." unique_id=1971699787]
++transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6176, 0)
+ 
+ [node name="Camera3D" type="Camera3D" parent="Head" unique_id=917607162]
+ unique_name_in_owner = true
+-transform = Transform3D(1, 0, 0, 0, 1, 2.9802322e-08, 0, -2.9802322e-08, 1, 0, 0.61761266, 0.00040754676)
+ cull_mask = 1048573
+ current = true
+ fov = 90.0
+ far = 3000.0
+ 
+-[node name="CSGMesh3D2" type="CSGMesh3D" parent="Head" unique_id=400821456]
+-transform = Transform3D(0.77262527, 0, 0, 0, 0.34440064, 0, 0, 0, 0.34243274, 0, 0.6499839, -0.3560543)
++[node name="Visor" type="MeshInstance3D" parent="Head" unique_id=400821456]
++transform = Transform3D(0.77262527, 0, 0, 0, 0.34440064, 0, 0, 0, 0.34243274, 0, 0.0324, -0.3560543)
+ layers = 2
+ mesh = SubResource("BoxMesh_3vyb7")
+ 
+@@ -34,13 +32,13 @@ shape = SubResource("CapsuleShape3D_g2els")
+ 
+ [node name="Skin" type="Node3D" parent="." unique_id=1890228174]
+ 
+-[node name="CSGMesh3D" type="CSGMesh3D" parent="Skin" unique_id=1099768263]
++[node name="BodyMesh" type="MeshInstance3D" parent="Skin" unique_id=1099768263]
+ layers = 2
+ mesh = SubResource("CapsuleMesh_qhqgy")
+ 
+-[node name="HUD" type="CanvasLayer" parent="."]
++[node name="HUD" type="CanvasLayer" parent="." unique_id=1203947561]
+ 
+-[node name="StaminaBar" parent="HUD" instance=ExtResource("2_stamina")]
++[node name="StaminaBar" parent="HUD" unique_id=1203947562 instance=ExtResource("2_stamina")]
+ offset_left = 20.0
+ offset_top = 60.0
+ offset_right = 212.0
+diff --git a/scenes/ui/hp_bar.tscn b/scenes/ui/health_bar.tscn
+similarity index 88%
+rename from scenes/ui/hp_bar.tscn
+rename to scenes/ui/health_bar.tscn
+index 1e1a44e..a4c4625 100644
+--- a/scenes/ui/hp_bar.tscn
++++ b/scenes/ui/health_bar.tscn
+@@ -1,17 +1,18 @@
+ [gd_scene format=3 uid="uid://fhwlxigmdri1"]
+ 
+ [ext_resource type="Texture2D" uid="uid://diqcijufkl7ps" path="res://textures/ui_temp/Double/Divider Fade/divider-fade-000.png" id="1_wupjp"]
+-[ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/hp_bar.gdshader" id="2_8pvdg"]
++[ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/stat_bar.gdshader" id="2_8pvdg"]
+ [ext_resource type="Texture2D" uid="uid://c8xp2x1uop8vv" path="res://textures/ui_temp/Double/Divider/divider-000.png" id="2_sxha3"]
+-[ext_resource type="Script" uid="uid://bycmpigrvk3r2" path="res://scenes/ui/hp_bar.gd" id="2_vtg2q"]
++[ext_resource type="Script" uid="uid://bycmpigrvk3r2" path="res://scenes/ui/stat_bar.gd" id="2_vtg2q"]
+ 
+ [sub_resource type="ShaderMaterial" id="ShaderMaterial_0cgy1"]
++resource_local_to_scene = true
+ shader = ExtResource("2_8pvdg")
+ shader_parameter/progress = 1.0
+ shader_parameter/progress_tail = 1.0
+ shader_parameter/tail_color = Color(0, 0.53826, 0.99155694, 1)
+ 
+-[node name="HpBar" type="TextureRect" unique_id=269408800]
++[node name="HealthBar" type="TextureRect" unique_id=269408800]
+ offset_right = 192.0
+ offset_bottom = 28.0
+ size_flags_horizontal = 4
+diff --git a/scenes/ui/stamina_bar.tscn b/scenes/ui/stamina_bar.tscn
+index 42a78d0..9b5d6cf 100644
+--- a/scenes/ui/stamina_bar.tscn
++++ b/scenes/ui/stamina_bar.tscn
+@@ -1,11 +1,12 @@
+-[gd_scene load_steps=6 format=3]
++[gd_scene format=3 uid="uid://c4s7taminab4r"]
+ 
+ [ext_resource type="Texture2D" uid="uid://diqcijufkl7ps" path="res://textures/ui_temp/Double/Divider Fade/divider-fade-000.png" id="1_bg"]
+-[ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/hp_bar.gdshader" id="2_shader"]
++[ext_resource type="Shader" uid="uid://olaah64kvknk" path="res://scenes/ui/stat_bar.gdshader" id="2_shader"]
+ [ext_resource type="Texture2D" uid="uid://c8xp2x1uop8vv" path="res://textures/ui_temp/Double/Divider/divider-000.png" id="3_fill"]
+-[ext_resource type="Script" uid="uid://bycmpigrvk3r2" path="res://scenes/ui/hp_bar.gd" id="4_script"]
++[ext_resource type="Script" uid="uid://bycmpigrvk3r2" path="res://scenes/ui/stat_bar.gd" id="4_script"]
+ 
+ [sub_resource type="ShaderMaterial" id="StaminaShaderMaterial"]
++resource_local_to_scene = true
+ shader = ExtResource("2_shader")
+ shader_parameter/progress = 1.0
+ shader_parameter/progress_tail = 1.0
+diff --git a/scenes/ui/hp_bar.gd b/scenes/ui/stat_bar.gd
+similarity index 67%
+rename from scenes/ui/hp_bar.gd
+rename to scenes/ui/stat_bar.gd
+index 8c0dfdd..73e03bc 100644
+--- a/scenes/ui/hp_bar.gd
++++ b/scenes/ui/stat_bar.gd
+@@ -1,5 +1,7 @@
+ @tool
++class_name StatBar
+ extends TextureRect
++## Универсальная шкала (здоровье, выносливость и т.п.) с «хвостом» изменения.
+ 
+ const ANIMATION_TIME: float = 0.5
+ 
+@@ -16,6 +18,8 @@ func _ready() -> void:
+ 	update_texture(0.0)
+ 
+ 
++## animate = false — менять шкалу мгновенно (для плавных непрерывных изменений,
++## например расхода выносливости, где анимация хвоста не нужна).
+ func set_value(new_value: float, animate: bool = true) -> void:
+ 	var clamped_value := clampf(new_value, min_value, max_value)
+ 	var direction := signf(clamped_value - value)
+@@ -37,7 +41,7 @@ func update_texture(direction: float) -> void:
+ 	var progress := clampf((value - min_value) / value_range, 0.0, 1.0)
+ 
+ 	if direction < 0.0:
+-		get_tween().tween_property(
++		_new_tween().tween_property(
+ 			progress_shader,
+ 			"shader_parameter/progress_tail",
+ 			progress,
+@@ -45,7 +49,7 @@ func update_texture(direction: float) -> void:
+ 		)
+ 		progress_shader.set_shader_parameter("progress", progress)
+ 	elif direction > 0.0:
+-		get_tween().tween_property(
++		_new_tween().tween_property(
+ 			progress_shader,
+ 			"shader_parameter/progress",
+ 			progress,
+@@ -53,11 +57,15 @@ func update_texture(direction: float) -> void:
+ 		)
+ 		progress_shader.set_shader_parameter("progress_tail", progress)
+ 	else:
++		# Мгновенное изменение: останавливаем незавершённую анимацию,
++		# иначе она перезапишет значения
++		if _tween:
++			_tween.kill()
+ 		progress_shader.set_shader_parameter("progress", progress)
+ 		progress_shader.set_shader_parameter("progress_tail", progress)
+ 
+ 
+-func get_tween() -> Tween:
++func _new_tween() -> Tween:
+ 	if _tween:
+ 		_tween.kill()
+ 
+diff --git a/scenes/ui/hp_bar.gd.uid b/scenes/ui/stat_bar.gd.uid
+similarity index 100%
+rename from scenes/ui/hp_bar.gd.uid
+rename to scenes/ui/stat_bar.gd.uid
+diff --git a/scenes/ui/hp_bar.gdshader b/scenes/ui/stat_bar.gdshader
+similarity index 81%
+rename from scenes/ui/hp_bar.gdshader
+rename to scenes/ui/stat_bar.gdshader
+index c31ea72..74b02c3 100644
+--- a/scenes/ui/hp_bar.gdshader
++++ b/scenes/ui/stat_bar.gdshader
+@@ -1,7 +1,7 @@
+ shader_type canvas_item;
+ 
+ uniform float progress: hint_range(0.0, 1.0) = 1.0;
+-uniform float progress_tail: hint_range(0.0, 1.0, 0.1) = 1.0;
++uniform float progress_tail: hint_range(0.0, 1.0) = 1.0;
+ uniform vec3 tail_color: source_color = vec3(1.0);
+ 
+ void fragment() {
+diff --git a/scenes/ui/hp_bar.gdshader.uid b/scenes/ui/stat_bar.gdshader.uid
+similarity index 100%
+rename from scenes/ui/hp_bar.gdshader.uid
+rename to scenes/ui/stat_bar.gdshader.uid
+diff --git a/scenes/ui/tmp_ui.tscn b/scenes/ui/tmp_ui.tscn
+deleted file mode 100644
+index cfa96bc..0000000
+--- a/scenes/ui/tmp_ui.tscn
++++ /dev/null
+@@ -1,12 +0,0 @@
+-[gd_scene format=3 uid="uid://di3ropa0ic6fj"]
+-
+-[node name="TmpUi" type="MarginContainer" unique_id=460624912]
+-anchors_preset = 15
+-anchor_right = 1.0
+-anchor_bottom = 1.0
+-grow_horizontal = 2
+-grow_vertical = 2
+-theme_override_constants/margin_left = 15
+-theme_override_constants/margin_top = 10
+-theme_override_constants/margin_right = 15
+-theme_override_constants/margin_bottom = 10
+diff --git a/scenes/world.tscn b/scenes/world.tscn
+index c5ce9d0..fbe5f18 100644
+--- a/scenes/world.tscn
++++ b/scenes/world.tscn
+@@ -29,8 +29,6 @@ shadow_enabled = true
+ 
+ [node name="player" parent="." unique_id=395011495 instance=ExtResource("1_nnsk1")]
+ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.77614, 32.239025, -257.51917)
+-gravity = 29.4
+-jump_velocity = 9.0
+ 
+ [node name="terrain" parent="." unique_id=609053471 instance=ExtResource("2_rwgxs")]
+ 
+diff --git a/scripts/player.gd b/scripts/player.gd
+index 052712f..f7d8efa 100644
+--- a/scripts/player.gd
++++ b/scripts/player.gd
+@@ -1,205 +1,175 @@
+ extends CharacterBody3D
+ 
+-##группы экспорта для удобства в редакторе
+-@export_group("Moving")
+-#чувствительность мыши
+-@export var mouse_sensitivity : float = 0.002
+-
+-#скорость движения персонажа (без спринта)
+-@export var speed : float = 5.0
+-
+-#скорость спринта персонажа
+-@export var sprint_speed : float = 16.0
+-
+-#гравитация и прыжок
+-@export var gravity : float = 9.8
+-@export var jump_velocity : float = 4.5
++## Контроллер игрока от первого лица: движение, спринт с выносливостью, эффекты камеры.
++## Все настройки живут здесь (значения по умолчанию = реальные игровые значения),
++## поэтому в player.tscn / world.tscn их переопределять не нужно.
+ 
++@export_group("Moving")
++## Чувствительность мыши
++@export var mouse_sensitivity: float = 0.002
++## Скорость ходьбы
++@export var speed: float = 4.0
++## Реальная скорость спринта
++@export var sprint_speed: float = 6.8
++## Скорость бега в состоянии истощения (выносливость кончилась)
++@export var exhausted_speed: float = 5.4
++@export var gravity: float = 29.4
++@export var jump_velocity: float = 9.0
++## Максимальный угол наклона головы вверх/вниз (в градусах)
++@export_range(1.0, 90.0, 1.0) var max_pitch_degrees: float = 89.0
+ 
+ @export_group("Stamina")
+-
+-# максимальное значение выносливости
++## Максимальное значение выносливости
+ @export_range(1.0, 1000.0, 1.0) var max_stamina: float = 100.0
+-
+-# продолжительность спринта
++## Сколько секунд можно бежать с полной выносливостью
+ @export_range(0.1, 120.0, 0.1) var sprint_duration: float = 15.0
+-
+-# продолжительность истощения выносливости
++## Сколько секунд можно бежать в состоянии истощения
+ @export_range(0.1, 30.0, 0.1) var exhaustion_duration: float = 3.0
+-
+-# продолжительность восстановления выносливости
++## Сколько секунд нужно на полное восстановление
+ @export_range(0.1, 120.0, 0.1) var stamina_recovery_duration: float = 20.0
+-
+-
+-
++## Доля выносливости, после которой снова разрешён спринт после истощения
++@export_range(0.0, 1.0, 0.05) var sprint_resume_threshold: float = 0.2
+ 
+ @export_group("Camera")
+-# стандартное и спринтовое поле зрения камеры, а также скорость изменения поля зрения
+-@export var standard_fov : float = 80.0
+-@export var sprint_fov : float = 95.0
+-@export var fov_change_speed : float = 8
+-
+-############################################################
+-##################### ССЫЛКИ НА НОДЫ #######################
+-############################################################
+-
+-@onready var head : Node3D = $Head
+-@onready var camera : Camera3D = $Head/Camera3D
+-@onready var stamina_bar: Node = $HUD/StaminaBar
+-
+-
+-
+-#############################################################
+-#################### ПЕРЕМЕННЫЕ ДЛЯ СКРИПТА #################
+-#############################################################
+-
+-# переменные для управления камерой
+-var bob_time: float
+-var lean_time: float
+-var current_stamina: float = 100.0
++@export var standard_fov: float = 90.0
++@export var sprint_fov: float = 95.0
++## Скорость сглаживания FOV и остальных эффектов камеры
++@export var fov_change_speed: float = 8.0
++@export var camera_smoothing: float = 10.0
++## Покачивание камеры (наклон вверх-вниз) при ходьбе
++@export var walk_bob_frequency: float = 10.0
++@export var walk_bob_amplitude: float = 0.1
++## Покачивание, наклон и тряска при спринте
++@export var sprint_bob_frequency: float = 8.5
++@export var sprint_bob_amplitude: float = 0.03
++@export var sprint_roll_amount: float = 0.01
++@export var sprint_shake_amount: float = 0.01
++## Наклон камеры при движении вбок
++@export var strafe_roll_amount: float = 0.05
++
++@onready var head: Node3D = $Head
++@onready var camera: Camera3D = $Head/Camera3D
++@onready var stamina_bar: StatBar = $HUD/StaminaBar
++
++var current_stamina: float = 0.0
+ var exhaustion_time_left: float = 0.0
+ var is_sprinting: bool = false
++## true после полного истощения, пока выносливость не восстановится до порога
++var sprint_locked: bool = false
++
++var _bob_time: float = 0.0
++var _shake_offset: Vector3 = Vector3.ZERO
+ 
+-# стартовые позиции камеры для эффектов покачивания и наклона
+-@onready var camera_start_position = camera.position
+-@onready var camera_start_rotation = camera.rotation
++@onready var _camera_start_position: Vector3 = camera.position
++@onready var _camera_start_rotation: Vector3 = camera.rotation
+ 
+-########################################################
+-#################### ФУНКЦИИ ГОДОТА ####################
+-########################################################
+ 
+ func _ready() -> void:
+ 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
++	camera.fov = standard_fov
+ 	current_stamina = max_stamina
+-	stamina_bar.set("max_value", max_stamina)
+-	stamina_bar.call("set_value", current_stamina, false)
++	stamina_bar.max_value = max_stamina
++	stamina_bar.set_value(current_stamina, false)
+ 
+ 
+ func _unhandled_input(event: InputEvent) -> void:
+-	if event is InputEventMouseMotion:
++	if event.is_action_pressed("ui_cancel"):
++		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
++		return
++
++	# Клик по окну возвращает захват мыши после Esc
++	if event is InputEventMouseButton and event.pressed \
++			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
++		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
++		return
++
++	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+ 		mouse_look(event)
+ 
+ 
+ func _physics_process(delta: float) -> void:
+ 	moving(delta)
+-	sprint_effect(delta)
+-
+-####################################################################
+-############################## КАМЕРА ##############################
+-####################################################################
+ 
+ 
+-# Эффект спринта: покачивангие камеры и увеличение FOV
+-func sprint_effect(delta: float) -> void:
+-	if is_sprinting and Vector2(velocity.x, velocity.z).length() > 0:
+-		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
++# Визуальные эффекты камеры считаем каждый кадр, а не в физическом тике
++func _process(delta: float) -> void:
++	update_camera_effects(delta)
+ 
+-		camera_lean(delta, lerp(0.5, 13.0, 0.7), lerp(0.0002, 0.01, 0.7))
+-		head_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5, true)
+-
+-		camera.position = Vector3(
+-			lerp(camera_start_position.x, camera.position.x + randf_range(-0.15, 0.15), 5 * delta),
+-			camera_start_position.y + sin(bob_time * 10) * 0.01,
+-			lerp(camera_start_position.z, camera.position.z + randf_range(-0.15, 0.15), 5 * delta)
+-		)
+-	else:
+-		camera.fov = lerp(camera.fov, standard_fov, fov_change_speed * delta)
+ 
++# ---------------------------------------------------------------- КАМЕРА ----
+ 
+-# основная функция для управления камерой мышью
+ func mouse_look(event: InputEventMouseMotion) -> void:
+ 	rotate_y(-event.relative.x * mouse_sensitivity)
+ 	head.rotate_x(-event.relative.y * mouse_sensitivity)
+-	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
++	var limit := deg_to_rad(max_pitch_degrees)
++	head.rotation.x = clampf(head.rotation.x, -limit, limit)
++
++
++# Все эффекты считаются как целевое состояние камеры, к которому она плавно
++# движется. Благодаря этому камера всегда возвращается в нейтраль, а результат
++# не зависит от частоты кадров.
++func update_camera_effects(delta: float) -> void:
++	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
++	var is_moving := is_on_floor() and horizontal_speed > 0.1
++	var smooth := 1.0 - exp(-camera_smoothing * delta)
++
++	var target_fov := sprint_fov if (is_sprinting and horizontal_speed > 0.1) else standard_fov
++	camera.fov = lerpf(camera.fov, target_fov, 1.0 - exp(-fov_change_speed * delta))
++
++	var target_position := _camera_start_position
++	var target_pitch := _camera_start_rotation.x
++	var target_roll := _camera_start_rotation.z
++	var target_shake := Vector3.ZERO
++
++	if is_moving:
++		if is_sprinting:
++			_bob_time += delta * sprint_bob_frequency
++			target_position.y += sin(_bob_time) * sprint_bob_amplitude
++			target_roll += sin(_bob_time * 0.5) * sprint_roll_amount
++			target_shake = Vector3(
++				randf_range(-1.0, 1.0),
++				0.0,
++				randf_range(-1.0, 1.0)
++			) * sprint_shake_amount
++		else:
++			_bob_time += delta * walk_bob_frequency
++			target_pitch += clampf(sin(_bob_time), -0.5, 0.5) * walk_bob_amplitude
+ 
++	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
++	target_roll += -input_dir.x * strafe_roll_amount
+ 
+-# функция для покачивания камеры при ходьбе
+-func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
+-	if rotation_amount:
+-		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
+-			camera_lean(delta, 5, 0.003)
++	_shake_offset = _shake_offset.lerp(target_shake, smooth)
++	camera.position = camera.position.lerp(target_position + _shake_offset, smooth)
++	camera.rotation.x = lerpf(camera.rotation.x, target_pitch, smooth)
++	camera.rotation.z = lerpf(camera.rotation.z, target_roll, smooth)
+ 
+-			bob_time += delta * frequency
+-			var bobbing_amount = sin(bob_time) * amplitude
+-			camera.position.y = camera_start_position.y + bobbing_amount
+-		else:
+-			camera.position.y = lerp(camera.position.y, camera_start_position.y, weight * delta)
+-	else:
+-		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
+-			bob_time += delta * frequency
+-			var bobbing_amount = clampf(sin(bob_time), -0.5, 0.5) * amplitude
+-			camera.rotation.x = camera_start_rotation.x + bobbing_amount
+-		else:
+-			camera.rotation.x = lerp(camera.rotation.x, camera_start_rotation.x, weight * delta)
+-
+-
+-# функция для наклона камеры в сторону движения и при спринте
+-func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
+-	if frequency == 0 and amplitude == 0:
+-		var input_dir: Vector2 = Input.get_vector(
+-			"move_left",
+-			"move_right",
+-			"move_forward",
+-			"move_back"
+-		).normalized()
+-		var target_lean = -input_dir.x * 0.05
+-		var current_lean = camera.rotation.z
+-		camera.rotation.z = lerp(current_lean, target_lean, 5 * delta)
+-	else:
+-		lean_time += delta * frequency
+-		var lean_amount = clampf(sin(lean_time), -0.6, 0.6) * amplitude
+-		camera.rotation.z = camera.rotation.z + lean_amount
+ 
+-#######################################################################
+-############################### ДВИЖЕНИЕ ##############################
+-#######################################################################
++# --------------------------------------------------------------- ДВИЖЕНИЕ ----
+ 
+ func moving(delta: float) -> void:
++	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+ 
+-	if not Input.is_action_pressed("sprint"):
+-		camera_lean(delta, 0, 0)
+-		head_bob(delta, 10, 0.1, 5, false)
+-
+-	var input_dir: Vector2 = Input.get_vector(
+-		"move_left",
+-		"move_right",
+-		"move_forward",
+-		"move_back"
+-	)
+-
+-	var stamina_before := current_stamina
+ 	var sprint_requested := Input.is_action_pressed("sprint") and input_dir.length() > 0.0
+-	var current_speed: float = speed
+-	var normal_sprint_speed := lerpf(speed, sprint_speed, 0.7)
+-	var exhaustion_speed := lerpf(speed, normal_sprint_speed, 0.5)
++	var current_speed := speed
+ 	is_sprinting = false
+ 
+ 	if sprint_requested:
+-		if current_stamina > 0.0:
++		if not sprint_locked and current_stamina > 0.0:
+ 			is_sprinting = true
+-			current_speed = normal_sprint_speed
+-
+-			var drain_rate := max_stamina / maxf(sprint_duration, 0.001)
+-			current_stamina = maxf(current_stamina - drain_rate * delta, 0.0)
+-
+-			if is_zero_approx(current_stamina):
+-				current_stamina = 0.0
+-				exhaustion_time_left = exhaustion_duration
++			current_speed = sprint_speed
++			_drain_stamina(delta)
+ 		elif exhaustion_time_left > 0.0:
++			# Выносливость кончилась: ещё немного бежим медленнее, потом только шаг
+ 			is_sprinting = true
+-			current_speed = exhaustion_speed
++			current_speed = exhausted_speed
+ 			exhaustion_time_left = maxf(exhaustion_time_left - delta, 0.0)
+ 	else:
++		# Отпустили спринт: остаток «истощённого» бега не сохраняется,
++		# поэтому его нельзя получить повторным нажатием
+ 		exhaustion_time_left = 0.0
++		_recover_stamina(delta)
+ 
+-		if current_stamina < max_stamina:
+-			var recovery_rate := max_stamina / maxf(stamina_recovery_duration, 0.001)
+-			current_stamina = minf(current_stamina + recovery_rate * delta, max_stamina)
+-
+-	if not is_equal_approx(stamina_before, current_stamina):
+-		stamina_bar.call("set_value", current_stamina)
+-
+-	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
++	var direction := (transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)).normalized()
+ 	velocity.x = direction.x * current_speed
+ 	velocity.z = direction.z * current_speed
+ 
+@@ -210,3 +180,28 @@ func moving(delta: float) -> void:
+ 		velocity.y -= gravity * delta
+ 
+ 	move_and_slide()
++
++
++func _drain_stamina(delta: float) -> void:
++	var drain_rate := max_stamina / maxf(sprint_duration, 0.001)
++	current_stamina = maxf(current_stamina - drain_rate * delta, 0.0)
++
++	if is_zero_approx(current_stamina):
++		current_stamina = 0.0
++		sprint_locked = true
++		exhaustion_time_left = exhaustion_duration
++
++	stamina_bar.set_value(current_stamina, false)
++
++
++func _recover_stamina(delta: float) -> void:
++	if current_stamina >= max_stamina:
++		return
++
++	var recovery_rate := max_stamina / maxf(stamina_recovery_duration, 0.001)
++	current_stamina = minf(current_stamina + recovery_rate * delta, max_stamina)
++
++	if sprint_locked and current_stamina >= max_stamina * sprint_resume_threshold:
++		sprint_locked = false
++
++	stamina_bar.set_value(current_stamina, false)
+diff --git a/textures/Water_Tower.mtl b/textures/Water_Tower.mtl
+deleted file mode 100644
+index 13f97b0..0000000
+--- a/textures/Water_Tower.mtl
++++ /dev/null
+@@ -1,2 +0,0 @@
+-# Blender 4.4.0 MTL File: 'ПРОВЕРЯЮ МОДЕЛЬКИ.blend'
+-# www.blender.org
+diff --git a/textures/divider-005.png b/textures/divider-005.png
+deleted file mode 100644
+index ad6e77c20cead46c266200cb76aed43af8bb4b86..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 157
+zcmV;O0Al}%P)<h;3K|Lk000e1NJLTq006)M001Nb0{{R3<;SPc00004XF*Lt006O%
+z3;baP00006P)t-s00030|No`gpWOfe00DGTPE!Ct=GbNc001>fL_t(2&tqV~2KfIo
+zFwk6rpT-jZKk)yjuEc)~@ZtY|kPoRSK@Tu6{-Az*3{1MBdj0?a5`EDTY@DR|00000
+LNkvXXu0mjfk5e}=
+
+diff --git a/textures/divider-005.png.import b/textures/divider-005.png.import
+deleted file mode 100644
+index 6f4a40e..0000000
+--- a/textures/divider-005.png.import
++++ /dev/null
+@@ -1,40 +0,0 @@
+-[remap]
+-
+-importer="texture"
+-type="CompressedTexture2D"
+-uid="uid://bto7k8n00fj7e"
+-path="res://.godot/imported/divider-005.png-5e2662ee91627106e102f479486fc8a8.ctex"
+-metadata={
+-"vram_texture": false
+-}
+-
+-[deps]
+-
+-source_file="res://textures/divider-005.png"
+-dest_files=["res://.godot/imported/divider-005.png-5e2662ee91627106e102f479486fc8a8.ctex"]
+-
+-[params]
+-
+-compress/mode=0
+-compress/high_quality=false
+-compress/lossy_quality=0.7
+-compress/uastc_level=0
+-compress/rdo_quality_loss=0.0
+-compress/hdr_compression=1
+-compress/normal_map=0
+-compress/channel_pack=0
+-mipmaps/generate=false
+-mipmaps/limit=-1
+-roughness/mode=0
+-roughness/src_normal=""
+-process/channel_remap/red=0
+-process/channel_remap/green=1
+-process/channel_remap/blue=2
+-process/channel_remap/alpha=3
+-process/fix_alpha_border=true
+-process/premult_alpha=false
+-process/normal_map_invert_y=false
+-process/hdr_as_srgb=false
+-process/hdr_clamp_exposure=false
+-process/size_limit=0
+-detect_3d/compress_to=1
+-- 
+2.43.0
+

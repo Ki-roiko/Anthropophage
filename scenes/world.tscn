@@ -29,8 +29,6 @@ shadow_enabled = true
 
 [node name="player" parent="." unique_id=395011495 instance=ExtResource("1_nnsk1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.77614, 32.239025, -257.51917)
-gravity = 29.4
-jump_velocity = 9.0
 
 [node name="terrain" parent="." unique_id=609053471 instance=ExtResource("2_rwgxs")]
 

@@ -1,5 +1,7 @@
 @tool
+class_name StatBar
 extends TextureRect
+## Универсальная шкала (здоровье, выносливость и т.п.) с «хвостом» изменения.
 
 const ANIMATION_TIME: float = 0.5
 
@@ -16,6 +18,8 @@ func _ready() -> void:
 	update_texture(0.0)
 
 
+## animate = false — менять шкалу мгновенно (для плавных непрерывных изменений,
+## например расхода выносливости, где анимация хвоста не нужна).
 func set_value(new_value: float, animate: bool = true) -> void:
 	var clamped_value := clampf(new_value, min_value, max_value)
 	var direction := signf(clamped_value - value)
@@ -37,7 +41,7 @@ func update_texture(direction: float) -> void:
 	var progress := clampf((value - min_value) / value_range, 0.0, 1.0)
 
 	if direction < 0.0:
-		get_tween().tween_property(
+		_new_tween().tween_property(
 			progress_shader,
 			"shader_parameter/progress_tail",
 			progress,
@@ -45,7 +49,7 @@ func update_texture(direction: float) -> void:
 		)
 		progress_shader.set_shader_parameter("progress", progress)
 	elif direction > 0.0:
-		get_tween().tween_property(
+		_new_tween().tween_property(
 			progress_shader,
 			"shader_parameter/progress",
 			progress,
@@ -53,11 +57,15 @@ func update_texture(direction: float) -> void:
 		)
 		progress_shader.set_shader_parameter("progress_tail", progress)
 	else:
+		# Мгновенное изменение: останавливаем незавершённую анимацию,
+		# иначе она перезапишет значения
+		if _tween:
+			_tween.kill()
 		progress_shader.set_shader_parameter("progress", progress)
 		progress_shader.set_shader_parameter("progress_tail", progress)
 
 
-func get_tween() -> Tween:
+func _new_tween() -> Tween:
 	if _tween:
 		_tween.kill()
 

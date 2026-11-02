@@ -1,175 +1,205 @@
 extends CharacterBody3D
 
-## Контроллер игрока от первого лица: движение, спринт с выносливостью, эффекты камеры.
-## Все настройки живут здесь (значения по умолчанию = реальные игровые значения),
-## поэтому в player.tscn / world.tscn их переопределять не нужно.
-
+##группы экспорта для удобства в редакторе
 @export_group("Moving")
-## Чувствительность мыши
-@export var mouse_sensitivity: float = 0.002
-## Скорость ходьбы
-@export var speed: float = 4.0
-## Реальная скорость спринта
-@export var sprint_speed: float = 6.8
-## Скорость бега в состоянии истощения (выносливость кончилась)
-@export var exhausted_speed: float = 5.4
-@export var gravity: float = 29.4
-@export var jump_velocity: float = 9.0
-## Максимальный угол наклона головы вверх/вниз (в градусах)
-@export_range(1.0, 90.0, 1.0) var max_pitch_degrees: float = 89.0
+#чувствительность мыши
+@export var mouse_sensitivity : float = 0.002
+
+#скорость движения персонажа (без спринта)
+@export var speed : float = 5.0
+
+#скорость спринта персонажа
+@export var sprint_speed : float = 16.0
+
+#гравитация и прыжок
+@export var gravity : float = 9.8
+@export var jump_velocity : float = 4.5
+
 
 @export_group("Stamina")
-## Максимальное значение выносливости
+
+# максимальное значение выносливости
 @export_range(1.0, 1000.0, 1.0) var max_stamina: float = 100.0
-## Сколько секунд можно бежать с полной выносливостью
+
+# продолжительность спринта
 @export_range(0.1, 120.0, 0.1) var sprint_duration: float = 15.0
-## Сколько секунд можно бежать в состоянии истощения
+
+# продолжительность истощения выносливости
 @export_range(0.1, 30.0, 0.1) var exhaustion_duration: float = 3.0
-## Сколько секунд нужно на полное восстановление
+
+# продолжительность восстановления выносливости
 @export_range(0.1, 120.0, 0.1) var stamina_recovery_duration: float = 20.0
-## Доля выносливости, после которой снова разрешён спринт после истощения
-@export_range(0.0, 1.0, 0.05) var sprint_resume_threshold: float = 0.2
+
+
+
 
 @export_group("Camera")
-@export var standard_fov: float = 90.0
-@export var sprint_fov: float = 95.0
-## Скорость сглаживания FOV и остальных эффектов камеры
-@export var fov_change_speed: float = 8.0
-@export var camera_smoothing: float = 10.0
-## Покачивание камеры (наклон вверх-вниз) при ходьбе
-@export var walk_bob_frequency: float = 10.0
-@export var walk_bob_amplitude: float = 0.1
-## Покачивание, наклон и тряска при спринте
-@export var sprint_bob_frequency: float = 8.5
-@export var sprint_bob_amplitude: float = 0.03
-@export var sprint_roll_amount: float = 0.01
-@export var sprint_shake_amount: float = 0.01
-## Наклон камеры при движении вбок
-@export var strafe_roll_amount: float = 0.05
+# стандартное и спринтовое поле зрения камеры, а также скорость изменения поля зрения
+@export var standard_fov : float = 80.0
+@export var sprint_fov : float = 95.0
+@export var fov_change_speed : float = 8
 
-@onready var head: Node3D = $Head
-@onready var camera: Camera3D = $Head/Camera3D
-@onready var stamina_bar: StatBar = $HUD/StaminaBar
+############################################################
+##################### ССЫЛКИ НА НОДЫ #######################
+############################################################
 
-var current_stamina: float = 0.0
+@onready var head : Node3D = $Head
+@onready var camera : Camera3D = $Head/Camera3D
+@onready var stamina_bar: Node = $HUD/StaminaBar
+
+
+
+#############################################################
+#################### ПЕРЕМЕННЫЕ ДЛЯ СКРИПТА #################
+#############################################################
+
+# переменные для управления камерой
+var bob_time: float
+var lean_time: float
+var current_stamina: float = 100.0
 var exhaustion_time_left: float = 0.0
 var is_sprinting: bool = false
-## true после полного истощения, пока выносливость не восстановится до порога
-var sprint_locked: bool = false
 
-var _bob_time: float = 0.0
-var _shake_offset: Vector3 = Vector3.ZERO
+# стартовые позиции камеры для эффектов покачивания и наклона
+@onready var camera_start_position = camera.position
+@onready var camera_start_rotation = camera.rotation
 
-@onready var _camera_start_position: Vector3 = camera.position
-@onready var _camera_start_rotation: Vector3 = camera.rotation
-
+########################################################
+#################### ФУНКЦИИ ГОДОТА ####################
+########################################################
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	camera.fov = standard_fov
 	current_stamina = max_stamina
-	stamina_bar.max_value = max_stamina
-	stamina_bar.set_value(current_stamina, false)
+	stamina_bar.set("max_value", max_stamina)
+	stamina_bar.call("set_value", current_stamina, false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		return
-
-	# Клик по окну возвращает захват мыши после Esc
-	if event is InputEventMouseButton and event.pressed \
-			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		return
-
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event is InputEventMouseMotion:
 		mouse_look(event)
 
 
 func _physics_process(delta: float) -> void:
 	moving(delta)
+	sprint_effect(delta)
+
+####################################################################
+############################## КАМЕРА ##############################
+####################################################################
 
 
-# Визуальные эффекты камеры считаем каждый кадр, а не в физическом тике
-func _process(delta: float) -> void:
-	update_camera_effects(delta)
+# Эффект спринта: покачивангие камеры и увеличение FOV
+func sprint_effect(delta: float) -> void:
+	if is_sprinting and Vector2(velocity.x, velocity.z).length() > 0:
+		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
+
+		camera_lean(delta, lerp(0.5, 13.0, 0.7), lerp(0.0002, 0.01, 0.7))
+		head_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5, true)
+
+		camera.position = Vector3(
+			lerp(camera_start_position.x, camera.position.x + randf_range(-0.15, 0.15), 5 * delta),
+			camera_start_position.y + sin(bob_time * 10) * 0.01,
+			lerp(camera_start_position.z, camera.position.z + randf_range(-0.15, 0.15), 5 * delta)
+		)
+	else:
+		camera.fov = lerp(camera.fov, standard_fov, fov_change_speed * delta)
 
 
-# ---------------------------------------------------------------- КАМЕРА ----
-
+# основная функция для управления камерой мышью
 func mouse_look(event: InputEventMouseMotion) -> void:
 	rotate_y(-event.relative.x * mouse_sensitivity)
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
-	var limit := deg_to_rad(max_pitch_degrees)
-	head.rotation.x = clampf(head.rotation.x, -limit, limit)
+	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
 
 
-# Все эффекты считаются как целевое состояние камеры, к которому она плавно
-# движется. Благодаря этому камера всегда возвращается в нейтраль, а результат
-# не зависит от частоты кадров.
-func update_camera_effects(delta: float) -> void:
-	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
-	var is_moving := is_on_floor() and horizontal_speed > 0.1
-	var smooth := 1.0 - exp(-camera_smoothing * delta)
+# функция для покачивания камеры при ходьбе
+func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
+	if rotation_amount:
+		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
+			camera_lean(delta, 5, 0.003)
 
-	var target_fov := sprint_fov if (is_sprinting and horizontal_speed > 0.1) else standard_fov
-	camera.fov = lerpf(camera.fov, target_fov, 1.0 - exp(-fov_change_speed * delta))
-
-	var target_position := _camera_start_position
-	var target_pitch := _camera_start_rotation.x
-	var target_roll := _camera_start_rotation.z
-	var target_shake := Vector3.ZERO
-
-	if is_moving:
-		if is_sprinting:
-			_bob_time += delta * sprint_bob_frequency
-			target_position.y += sin(_bob_time) * sprint_bob_amplitude
-			target_roll += sin(_bob_time * 0.5) * sprint_roll_amount
-			target_shake = Vector3(
-				randf_range(-1.0, 1.0),
-				0.0,
-				randf_range(-1.0, 1.0)
-			) * sprint_shake_amount
+			bob_time += delta * frequency
+			var bobbing_amount = sin(bob_time) * amplitude
+			camera.position.y = camera_start_position.y + bobbing_amount
 		else:
-			_bob_time += delta * walk_bob_frequency
-			target_pitch += clampf(sin(_bob_time), -0.5, 0.5) * walk_bob_amplitude
-
-	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	target_roll += -input_dir.x * strafe_roll_amount
-
-	_shake_offset = _shake_offset.lerp(target_shake, smooth)
-	camera.position = camera.position.lerp(target_position + _shake_offset, smooth)
-	camera.rotation.x = lerpf(camera.rotation.x, target_pitch, smooth)
-	camera.rotation.z = lerpf(camera.rotation.z, target_roll, smooth)
+			camera.position.y = lerp(camera.position.y, camera_start_position.y, weight * delta)
+	else:
+		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
+			bob_time += delta * frequency
+			var bobbing_amount = clampf(sin(bob_time), -0.5, 0.5) * amplitude
+			camera.rotation.x = camera_start_rotation.x + bobbing_amount
+		else:
+			camera.rotation.x = lerp(camera.rotation.x, camera_start_rotation.x, weight * delta)
 
 
-# --------------------------------------------------------------- ДВИЖЕНИЕ ----
+# функция для наклона камеры в сторону движения и при спринте
+func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
+	if frequency == 0 and amplitude == 0:
+		var input_dir: Vector2 = Input.get_vector(
+			"move_left",
+			"move_right",
+			"move_forward",
+			"move_back"
+		).normalized()
+		var target_lean = -input_dir.x * 0.05
+		var current_lean = camera.rotation.z
+		camera.rotation.z = lerp(current_lean, target_lean, 5 * delta)
+	else:
+		lean_time += delta * frequency
+		var lean_amount = clampf(sin(lean_time), -0.6, 0.6) * amplitude
+		camera.rotation.z = camera.rotation.z + lean_amount
+
+#######################################################################
+############################### ДВИЖЕНИЕ ##############################
+#######################################################################
 
 func moving(delta: float) -> void:
-	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 
+	if not Input.is_action_pressed("sprint"):
+		camera_lean(delta, 0, 0)
+		head_bob(delta, 10, 0.1, 5, false)
+
+	var input_dir: Vector2 = Input.get_vector(
+		"move_left",
+		"move_right",
+		"move_forward",
+		"move_back"
+	)
+
+	var stamina_before := current_stamina
 	var sprint_requested := Input.is_action_pressed("sprint") and input_dir.length() > 0.0
-	var current_speed := speed
+	var current_speed: float = speed
+	var normal_sprint_speed := lerpf(speed, sprint_speed, 0.7)
+	var exhaustion_speed := lerpf(speed, normal_sprint_speed, 0.5)
 	is_sprinting = false
 
 	if sprint_requested:
-		if not sprint_locked and current_stamina > 0.0:
+		if current_stamina > 0.0:
 			is_sprinting = true
-			current_speed = sprint_speed
-			_drain_stamina(delta)
+			current_speed = normal_sprint_speed
+
+			var drain_rate := max_stamina / maxf(sprint_duration, 0.001)
+			current_stamina = maxf(current_stamina - drain_rate * delta, 0.0)
+
+			if is_zero_approx(current_stamina):
+				current_stamina = 0.0
+				exhaustion_time_left = exhaustion_duration
 		elif exhaustion_time_left > 0.0:
-			# Выносливость кончилась: ещё немного бежим медленнее, потом только шаг
 			is_sprinting = true
-			current_speed = exhausted_speed
+			current_speed = exhaustion_speed
 			exhaustion_time_left = maxf(exhaustion_time_left - delta, 0.0)
 	else:
-		# Отпустили спринт: остаток «истощённого» бега не сохраняется,
-		# поэтому его нельзя получить повторным нажатием
 		exhaustion_time_left = 0.0
-		_recover_stamina(delta)
 
-	var direction := (transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)).normalized()
+		if current_stamina < max_stamina:
+			var recovery_rate := max_stamina / maxf(stamina_recovery_duration, 0.001)
+			current_stamina = minf(current_stamina + recovery_rate * delta, max_stamina)
+
+	if not is_equal_approx(stamina_before, current_stamina):
+		stamina_bar.call("set_value", current_stamina)
+
+	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	velocity.x = direction.x * current_speed
 	velocity.z = direction.z * current_speed
 
@@ -180,28 +210,3 @@ func moving(delta: float) -> void:
 		velocity.y -= gravity * delta
 
 	move_and_slide()
-
-
-func _drain_stamina(delta: float) -> void:
-	var drain_rate := max_stamina / maxf(sprint_duration, 0.001)
-	current_stamina = maxf(current_stamina - drain_rate * delta, 0.0)
-
-	if is_zero_approx(current_stamina):
-		current_stamina = 0.0
-		sprint_locked = true
-		exhaustion_time_left = exhaustion_duration
-
-	stamina_bar.set_value(current_stamina, false)
-
-
-func _recover_stamina(delta: float) -> void:
-	if current_stamina >= max_stamina:
-		return
-
-	var recovery_rate := max_stamina / maxf(stamina_recovery_duration, 0.001)
-	current_stamina = minf(current_stamina + recovery_rate * delta, max_stamina)
-
-	if sprint_locked and current_stamina >= max_stamina * sprint_resume_threshold:
-		sprint_locked = false
-
-	stamina_bar.set_value(current_stamina, false)

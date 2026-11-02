@@ -95,12 +95,12 @@ func sprint_effect(delta: float) -> void:
 		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
 
 		camera_lean(delta, lerp(0.5, 13.0, 0.7), lerp(0.0002, 0.01, 0.7))
-		head_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5, 1)
+		head_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5, true)
 
 		camera.position = Vector3(
-			lerp(camera.position.x, camera.position.x + randf_range(-0.15, 0.15), 5 * delta),
+			lerp(camera_start_position.x, camera.position.x + randf_range(-0.15, 0.15), 5 * delta),
 			camera_start_position.y + sin(bob_time * 10) * 0.01,
-			lerp(camera.position.z, camera.position.z + randf_range(-0.15, 0.15), 5 * delta)
+			lerp(camera_start_position.z, camera.position.z + randf_range(-0.15, 0.15), 5 * delta)
 		)
 	else:
 		camera.fov = lerp(camera.fov, standard_fov, fov_change_speed * delta)
@@ -114,8 +114,8 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 
 
 # функция для покачивания камеры при ходьбе
-func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: float) -> void:
-	if rotation_amount == 0:
+func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
+	if rotation_amount:
 		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
 			camera_lean(delta, 5, 0.003)
 
@@ -156,8 +156,10 @@ func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
 
 func moving(delta: float) -> void:
 
-	camera_lean(delta, 0, 0)
-	head_bob(delta, 10, 0.1, 5, 0)
+	if not Input.is_action_pressed("sprint"):
+		camera_lean(delta, 0, 0)
+		head_bob(delta, 10, 0.1, 5, false)
+
 	var input_dir: Vector2 = Input.get_vector(
 		"move_left",
 		"move_right",

@@ -54,11 +54,13 @@ extends CharacterBody3D
 #############################################################
 
 # переменные для управления камерой
+var fall_time: float
 var bob_time: float
 var lean_time: float
 var current_stamina: float = 100.0
 var exhaustion_time_left: float = 0.0
 var is_sprinting: bool = false
+var strong_fall: bool = false
 
 # стартовые позиции камеры для эффектов покачивания и наклона
 @onready var camera_start_position = camera.position
@@ -83,6 +85,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	moving(delta)
 	sprint_effect(delta)
+	fall_effect(delta, 20, 0.1)
 
 ####################################################################
 ############################## КАМЕРА ##############################
@@ -95,7 +98,7 @@ func sprint_effect(delta: float) -> void:
 		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
 
 		camera_lean(delta, lerp(0.5, 13.0, 0.7), lerp(0.0002, 0.01, 0.7))
-		head_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5, 1)
+		head_bob(delta, lerp(0.5, 12.0, 0.7), 0.03, 5, true)
 
 		camera.position = Vector3(
 			lerp(camera.position.x, camera.position.x + randf_range(-0.15, 0.15), 5 * delta),
@@ -114,8 +117,8 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 
 
 # функция для покачивания камеры при ходьбе
-func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: float) -> void:
-	if rotation_amount == 0:
+func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
+	if rotation_amount == false:
 		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
 			camera_lean(delta, 5, 0.003)
 
@@ -150,14 +153,35 @@ func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
 		var lean_amount = clampf(sin(lean_time), -0.6, 0.6) * amplitude
 		camera.rotation.z = camera.rotation.z + lean_amount
 
+
+func fall_effect(delta: float, frequency: float, amplitude: float) -> void:
+	if not is_on_floor() and velocity.y < -5:
+		camera.rotation.x = lerp(camera.rotation.x, 1.0, 0.5 * delta)
+	else:
+		camera.rotation.x = lerp(camera.rotation.x, camera_start_rotation.x, 5 * delta)
+
+	if not is_on_floor() and velocity.y < -10:
+		strong_fall = true
+		camera.rotation.z = randf_range(camera.rotation.z - lerp(0.01, 0.1, 0.5 * delta), camera.rotation.z + lerp(0.01, 0.1, 0.5 * delta))
+	else:
+		camera.rotation.z = lerp(camera.rotation.z, camera_start_rotation.z, 0.5 * delta)
+
+
+
+	if is_on_floor() and strong_fall:
+		camera.rotation.x = -0.7
+		strong_fall = false
+		fall_time = 0.0
+
+
+
 #######################################################################
 ############################### ДВИЖЕНИЕ ##############################
 #######################################################################
 
 func moving(delta: float) -> void:
 
-	camera_lean(delta, 0, 0)
-	head_bob(delta, 10, 0.1, 5, 0)
+	head_bob(delta, 10, 0.1, 5, false)
 	var input_dir: Vector2 = Input.get_vector(
 		"move_left",
 		"move_right",

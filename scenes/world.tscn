@@ -18,6 +18,14 @@ background_mode = 2
 sky = SubResource("Sky_nnsk1")
 tonemap_mode = 2
 
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_0cgy1"]
+height = 12.410522
+radius = 3.4960938
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_af4pb"]
+height = 17.30957
+radius = 1.6918945
+
 [node name="World" type="Node3D" unique_id=800657313]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1897837579]
@@ -34,5 +42,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.77614, 32.239025, -257.5
 
 [node name="TowerNew" parent="." unique_id=876305968 instance=ExtResource("3_4wyf3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255, 0, -255)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="TowerNew" unique_id=1807234864]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.364759, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TowerNew/StaticBody3D" unique_id=1084100689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.798132, 0)
+shape = SubResource("CylinderShape3D_0cgy1")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="TowerNew/StaticBody3D" unique_id=602800962]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4.866699, 0)
+shape = SubResource("CylinderShape3D_af4pb")
 
 [editable path="TowerNew"]

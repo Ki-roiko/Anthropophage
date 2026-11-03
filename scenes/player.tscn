@@ -10,6 +10,7 @@
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_qhqgy"]
 
 [node name="Player" type="CharacterBody3D" unique_id=1854722376]
+transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.006963153, 0, 0, 0)
 script = ExtResource("1_3vyb7")
 speed = 4.0
 sprint_speed = 8.0

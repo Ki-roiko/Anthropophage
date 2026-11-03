@@ -169,7 +169,7 @@ func fall_effect(delta: float, frequency: float, amplitude: float) -> void:
 
 
 	if is_on_floor() and strong_fall:
-		camera.rotation.x = -0.7
+		#camera.rotation.x += -0.5
 		strong_fall = false
 		fall_time = 0.0
 

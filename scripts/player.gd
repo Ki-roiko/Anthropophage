@@ -93,10 +93,6 @@ func _setup_terrain_tracking() -> void:
 	if terrain.has_method("set_camera"):
 		terrain.call("set_camera", camera)
 
-	# Для этой карты используем коллизии всех регионов, а не только динамическую
-	# область вокруг камеры. Так физические предметы не зависят от обновления LOD.
-	terrain.set("collision_mode", 3)
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Пока открыт инвентарь, мышь управляет интерфейсом, а не камерой.
@@ -190,7 +186,7 @@ func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
 		camera.rotation.z = camera.rotation.z + lean_amount
 
 
-func fall_effect(delta: float, frequency: float, amplitude: float) -> void:
+func fall_effect(delta: float, _frequency: float, _amplitude: float) -> void:
 	if not is_on_floor() and velocity.y < -5:
 		camera.rotation.x = lerp(camera.rotation.x, 1.0, 0.5 * delta)
 	else:

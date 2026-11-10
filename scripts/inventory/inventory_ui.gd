@@ -24,7 +24,7 @@ var _candidate_position: Vector2i = Vector2i.ZERO
 var _candidate_valid: bool = false
 var _dragging_rotated: bool = false
 
-var _mouse_mode_before_open: int = Input.MOUSE_MODE_CAPTURED
+var _mouse_mode_before_open: Input.MouseMode = Input.MOUSE_MODE_CAPTURED
 
 
 func _ready() -> void:
@@ -69,10 +69,7 @@ func _input(event: InputEvent) -> void:
 			return
 
 		if is_open and _dragging_uid >= 0 and event.keycode == KEY_R:
-			_dragging_rotated = not _dragging_rotated
-			if _dragging_button != null:
-				_drag_offset_px = _dragging_button.size * 0.5
-			_update_drag_preview()
+			_rotate_dragged_item()
 			get_viewport().set_input_as_handled()
 			return
 
@@ -206,7 +203,6 @@ func _rebuild_items() -> void:
 		var button := Button.new()
 		button.position = _cell_to_pixel(entry.get("position", Vector2i.ZERO))
 		button.size = button_size
-		button.custom_minimum_size = button_size
 		button.text = "%s\n×%d" % [
 			definition.icon_symbol,
 			int(entry.get("amount", 1))
@@ -279,12 +275,15 @@ func _update_drag_preview() -> void:
 	if _dragging_uid < 0 or _dragging_button == null:
 		return
 
-	var top_left_global := get_global_mouse_position() - _drag_offset_px
-	var board_local: Vector2 = _board.to_local(top_left_global)
+	var mouse_global := get_global_mouse_position()
+	# Control не предоставляет Node2D.to_local(). Преобразуем координаты курсора
+	# из canvas-пространства в локальные координаты сетки напрямую.
+	var mouse_board_local: Vector2 = _board.get_global_transform_with_canvas().affine_inverse() * mouse_global
+	var item_board_local := mouse_board_local - _drag_offset_px
 	var step := cell_size + cell_gap
 	_candidate_position = Vector2i(
-		floori(board_local.x / step),
-		floori(board_local.y / step)
+		floori(item_board_local.x / step),
+		floori(item_board_local.y / step)
 	)
 	_candidate_valid = inventory_data.can_place(
 		_dragging_uid,
@@ -298,12 +297,18 @@ func _update_drag_preview() -> void:
 		var footprint := definition.size
 		if _dragging_rotated:
 			footprint = Vector2i(definition.size.y, definition.size.x)
-		_dragging_button.size = Vector2(
+		var preview_size := Vector2(
 			footprint.x * cell_size + (footprint.x - 1) * cell_gap,
 			footprint.y * cell_size + (footprint.y - 1) * cell_gap
 		)
+		# Карточки не находятся внутри Container, поэтому им не нужен
+		# custom_minimum_size. Задаём точный размер напрямую, без отложенного
+		# пересчёта minimum-size, который превращал прямоугольник в квадрат.
+		_dragging_button.size = preview_size
 
-	_dragging_button.position = Vector2(_candidate_position) * step
+	# Карточка следует за курсором без скачков по клеткам. Сетка используется
+	# только для подсветки и окончательного размещения при отпускании ЛКМ.
+	_dragging_button.position = item_board_local
 	_dragging_button.modulate = (
 		Color(0.62, 1.0, 0.7, 0.94)
 		if _candidate_valid
@@ -312,8 +317,36 @@ func _update_drag_preview() -> void:
 	_update_cell_highlights()
 
 
+func _rotate_dragged_item() -> void:
+	if _dragging_button == null:
+		return
+
+	var entry := inventory_data.get_item(_dragging_uid)
+	var definition := inventory_data.get_definition(StringName(entry.get("item_id", "")))
+	if definition == null or definition.size.x == definition.size.y:
+		return
+
+	# Сохраняем относительную точку, за которую игрок держит карточку. Поэтому
+	# смена 1×2 на 2×1 не переносит её в центр и не меняет клетку под курсором.
+	var old_size := _dragging_button.size
+	var relative_grab := Vector2(
+		clampf(_drag_offset_px.x / maxf(old_size.x, 1.0), 0.0, 1.0),
+		clampf(_drag_offset_px.y / maxf(old_size.y, 1.0), 0.0, 1.0)
+	)
+	_dragging_rotated = not _dragging_rotated
+
+	var new_footprint := definition.size
+	if _dragging_rotated:
+		new_footprint = Vector2i(definition.size.y, definition.size.x)
+	var new_size := Vector2(
+		new_footprint.x * cell_size + (new_footprint.x - 1) * cell_gap,
+		new_footprint.y * cell_size + (new_footprint.y - 1) * cell_gap
+	)
+	_drag_offset_px = relative_grab * new_size
+	_update_drag_preview()
+
+
 func _update_cell_highlights() -> void:
-	var step := cell_size + cell_gap
 	var entry := inventory_data.get_item(_dragging_uid)
 	var definition := inventory_data.get_definition(StringName(entry.get("item_id", "")))
 	var footprint := Vector2i.ONE
@@ -382,8 +415,8 @@ func _clear_cell_highlights() -> void:
 		)
 
 
-func _cell_to_pixel(position: Vector2i) -> Vector2:
-	return Vector2(position) * (cell_size + cell_gap)
+func _cell_to_pixel(cell_position: Vector2i) -> Vector2:
+	return Vector2(cell_position) * (cell_size + cell_gap)
 
 
 func _make_panel_style() -> StyleBoxFlat:

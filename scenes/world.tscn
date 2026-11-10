@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://n40c44khpb7b"]
+[gd_scene load_steps=13 format=3 uid="uid://n40c44khpb7b"]
 
 [ext_resource type="PackedScene" uid="uid://dir5y0rb0f7ux" path="res://scenes/player.tscn" id="1_nnsk1"]
 [ext_resource type="PackedScene" uid="uid://b2qtey7421crf" path="res://scenes/terrain.tscn" id="2_rwgxs"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/items/world_item.tscn" id="4_world_item"]
 [ext_resource type="PackedScene" path="res://scenes/items/physics_crate.tscn" id="5_physics_crate"]
 [ext_resource type="Script" path="res://scripts/terrain_camera_setup.gd" id="6_terrain_camera_setup"]
+[ext_resource type="Script" path="res://scripts/world_setup.gd" id="7_world_setup"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_e5uuo"]
 sky_top_color = Color(0.5285261, 0.75772786, 0.9690928, 1)
@@ -79,5 +80,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.7, 33.0, -260.5)
 
 [node name="TerrainCameraSetup" type="Node" parent="."]
 script = ExtResource("6_terrain_camera_setup")
+
+[node name="WorldSetup" type="Node3D" parent="."]
+script = ExtResource("7_world_setup")
 
 [editable path="TowerNew"]

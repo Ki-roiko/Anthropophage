@@ -16,9 +16,14 @@ func _ready() -> void:
 		push_error("TerrainCameraSetup: не найдена камера player/Head/Camera3D.")
 		return
 
-	# Указываем одну и ту же цель для LOD-сетки и динамических коллизий.
+	# Указываем камеру как цель клипмапа. Полная игровая коллизия задана
+	# непосредственно в сцене Terrain3D и не зависит от позиции камеры.
 	terrain.set("clipmap_target", camera)
-	terrain.set("collision_target", camera)
 
 	# Также задаём основную камеру Terrain3D через его публичный API.
 	terrain.call("set_camera", camera)
+	# В Terrain3D 1.0.2 это публичный способ пересобрать shapes после
+	# назначения режима и камеры; он не создаёт стороннюю геометрию.
+	var collision = terrain.get("collision")
+	if collision != null and collision.has_method("update"):
+		collision.call("update", true)

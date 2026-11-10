@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://d3jr60li8d5eo" path="res://models/tower/TowerNew.glb" id="3_4wyf3"]
 [ext_resource type="PackedScene" path="res://scenes/items/world_item.tscn" id="4_world_item"]
 [ext_resource type="PackedScene" path="res://scenes/items/physics_crate.tscn" id="5_physics_crate"]
+[ext_resource type="Script" path="res://scripts/terrain_camera_setup.gd" id="6_terrain_camera_setup"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_e5uuo"]
 sky_top_color = Color(0.5285261, 0.75772786, 0.9690928, 1)
@@ -75,5 +76,8 @@ amount = 1
 # Лёгкий физический ящик: его можно захватить ЛКМ и перемещать.
 [node name="PhysicsCrate" parent="." instance=ExtResource("5_physics_crate")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.7, 33.0, -260.5)
+
+[node name="TerrainCameraSetup" type="Node" parent="."]
+script = ExtResource("6_terrain_camera_setup")
 
 [editable path="TowerNew"]

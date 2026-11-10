@@ -61,7 +61,7 @@ func _update_interactable() -> void:
 		0xFFFFFFFF,
 		[player.get_rid()]
 	)
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	var hit := player.get_world_3d().direct_space_state.intersect_ray(query)
 
 	if not hit.is_empty():
 		var candidate := hit.get("collider") as Node

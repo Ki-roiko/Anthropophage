@@ -280,7 +280,7 @@ func _update_drag_preview() -> void:
 		return
 
 	var top_left_global := get_global_mouse_position() - _drag_offset_px
-	var board_local := _board.to_local(top_left_global)
+	var board_local: Vector2 = _board.to_local(top_left_global)
 	var step := cell_size + cell_gap
 	_candidate_position = Vector2i(
 		floori(board_local.x / step),

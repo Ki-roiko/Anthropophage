@@ -1,7 +1,11 @@
-[gd_scene format=3 uid="uid://dir5y0rb0f7ux"]
+[gd_scene load_steps=10 format=3 uid="uid://dir5y0rb0f7ux"]
 
 [ext_resource type="Script" uid="uid://blgv0q4pc3u2b" path="res://scripts/player.gd" id="1_3vyb7"]
 [ext_resource type="PackedScene" uid="uid://c4s7taminab4r" path="res://scenes/ui/stamina_bar.tscn" id="2_stamina"]
+[ext_resource type="Script" path="res://scripts/inventory/inventory_data.gd" id="3_inventory"]
+[ext_resource type="Script" path="res://scripts/inventory/inventory_ui.gd" id="4_inventory_ui"]
+[ext_resource type="Script" path="res://scripts/player_interaction.gd" id="5_interaction"]
+[ext_resource type="Script" path="res://scripts/physics_grab.gd" id="6_physics_grab"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
 
@@ -40,6 +44,9 @@ shape = SubResource("CapsuleShape3D_g2els")
 layers = 2
 mesh = SubResource("CapsuleMesh_qhqgy")
 
+[node name="InventoryData" type="Node" parent="."]
+script = ExtResource("3_inventory")
+
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1203947561]
 
 [node name="StaminaBar" parent="HUD" unique_id=1203947562 instance=ExtResource("2_stamina")]
@@ -47,3 +54,34 @@ offset_left = 20.0
 offset_top = 60.0
 offset_right = 212.0
 offset_bottom = 88.0
+
+[node name="InventoryUI" type="Control" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_inventory_ui")
+
+[node name="InteractionPrompt" type="Label" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -100.0
+offset_right = 280.0
+offset_bottom = -48.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.96, 0.96, 0.93, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="PlayerInteraction" type="Node" parent="."]
+script = ExtResource("5_interaction")
+
+[node name="PhysicsGrab" type="Node" parent="."]
+script = ExtResource("6_physics_grab")

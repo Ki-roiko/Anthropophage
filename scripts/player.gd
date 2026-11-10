@@ -46,6 +46,7 @@ extends CharacterBody3D
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
+@onready var inventory_ui: InventoryUIController = $HUD/InventoryUI
 
 
 
@@ -78,11 +79,26 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Пока открыт инвентарь, мышь управляет интерфейсом, а не камерой.
+	if inventory_ui.is_open:
+		return
+
 	if event is InputEventMouseMotion:
 		mouse_look(event)
 
 
 func _physics_process(delta: float) -> void:
+	# Не двигаем игрока и не обновляем игровые эффекты, пока открыт инвентарь.
+	if inventory_ui.is_open:
+		# Останавливаем горизонтальное движение, но сохраняем гравитацию.
+		velocity.x = 0.0
+		velocity.z = 0.0
+		is_sprinting = false
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+		move_and_slide()
+		return
+
 	moving(delta)
 	sprint_effect(delta)
 	fall_effect(delta, 20, 0.1)

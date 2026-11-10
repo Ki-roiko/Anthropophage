@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://resources/items/item_definition.gd" id="1"]
+
+[sub_resource type="BoxMesh" id="ToolboxMesh"]
+size = Vector3(0.38, 0.24, 0.26)
+
+[resource]
+script = ExtResource("1")
+item_id = &"toolbox"
+display_name = "Ящик с инструментами"
+description = "Тяжёлый набор инструментов."
+size = Vector2i(2, 2)
+max_stack_size = 1
+icon_symbol = "▣"
+display_color = Color(0.68, 0.2, 0.12, 1)
+world_mesh = SubResource("ToolboxMesh")
+weight = 4.0

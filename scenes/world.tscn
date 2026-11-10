@@ -3,6 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://dir5y0rb0f7ux" path="res://scenes/player.tscn" id="1_nnsk1"]
 [ext_resource type="PackedScene" uid="uid://b2qtey7421crf" path="res://scenes/terrain.tscn" id="2_rwgxs"]
 [ext_resource type="PackedScene" uid="uid://d3jr60li8d5eo" path="res://models/tower/TowerNew.glb" id="3_4wyf3"]
+[ext_resource type="PackedScene" path="res://scenes/items/world_item.tscn" id="4_world_item"]
+[ext_resource type="PackedScene" path="res://scenes/items/physics_crate.tscn" id="5_physics_crate"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_e5uuo"]
 sky_top_color = Color(0.5285261, 0.75772786, 0.9690928, 1)
@@ -53,5 +55,25 @@ shape = SubResource("CylinderShape3D_0cgy1")
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="TowerNew/StaticBody3D" unique_id=602800962]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4.866699, 0)
 shape = SubResource("CylinderShape3D_af4pb")
+
+# Стартовые предметы для проверки подбора, инвентаря и выбрасывания.
+[node name="BandagePickup" parent="." instance=ExtResource("4_world_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.7, 32.8, -259.2)
+item_id = &"bandage"
+amount = 1
+
+[node name="MetalScrapPickup" parent="." instance=ExtResource("4_world_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -254.6, 32.8, -260.2)
+item_id = &"metal_scrap"
+amount = 4
+
+[node name="ToolboxPickup" parent="." instance=ExtResource("4_world_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -256.8, 32.8, -260.0)
+item_id = &"toolbox"
+amount = 1
+
+# Лёгкий физический ящик: его можно захватить ЛКМ и перемещать.
+[node name="PhysicsCrate" parent="." instance=ExtResource("5_physics_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.7, 33.0, -260.5)
 
 [editable path="TowerNew"]

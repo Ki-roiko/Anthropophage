@@ -46,6 +46,7 @@ extends CharacterBody3D
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
+@onready var inventory_ui: InventoryUIController = $HUD/InventoryUI
 
 
 
@@ -76,13 +77,48 @@ func _ready() -> void:
 	stamina_bar.set("max_value", max_stamina)
 	stamina_bar.call("set_value", current_stamina, false)
 
+	# Terrain3D не всегда находит камеру, если она находится внутри инстанса Player.
+	# Привязываем камеру и физическую зону Terrain3D после готовности всех узлов сцены.
+	call_deferred("_setup_terrain_tracking")
+
+
+func _setup_terrain_tracking() -> void:
+	var world_root := get_parent()
+	var terrain := world_root.get_node_or_null("terrain/Terrain3D")
+	if terrain == null:
+		push_warning("Player: не найден узел terrain/Terrain3D для привязки камеры.")
+		return
+
+	# Явно назначаем камеру Terrain3D.
+	if terrain.has_method("set_camera"):
+		terrain.call("set_camera", camera)
+
+	# Для этой карты используем коллизии всех регионов, а не только динамическую
+	# область вокруг камеры. Так физические предметы не зависят от обновления LOD.
+	terrain.set("collision_mode", 3)
+
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Пока открыт инвентарь, мышь управляет интерфейсом, а не камерой.
+	if inventory_ui.is_open:
+		return
+
 	if event is InputEventMouseMotion:
 		mouse_look(event)
 
 
 func _physics_process(delta: float) -> void:
+	# Не двигаем игрока и не обновляем игровые эффекты, пока открыт инвентарь.
+	if inventory_ui.is_open:
+		# Останавливаем горизонтальное движение, но сохраняем гравитацию.
+		velocity.x = 0.0
+		velocity.z = 0.0
+		is_sprinting = false
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+		move_and_slide()
+		return
+
 	moving(delta)
 	sprint_effect(delta)
 	fall_effect(delta, 20, 0.1)

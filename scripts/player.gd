@@ -89,14 +89,9 @@ func _setup_terrain_tracking() -> void:
 		push_warning("Player: не найден узел terrain/Terrain3D для привязки камеры.")
 		return
 
+	# В Terrain3D 1.0.2 set_camera также запускает обновление динамических коллизий.
 	if terrain.has_method("set_camera"):
 		terrain.call("set_camera", camera)
-
-	if terrain.has_method("set_collision_target"):
-		terrain.call("set_collision_target", self)
-
-	if terrain.has_method("snap"):
-		terrain.call("snap")
 
 
 func _unhandled_input(event: InputEvent) -> void:

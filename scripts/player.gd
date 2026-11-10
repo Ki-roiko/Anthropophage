@@ -77,6 +77,27 @@ func _ready() -> void:
 	stamina_bar.set("max_value", max_stamina)
 	stamina_bar.call("set_value", current_stamina, false)
 
+	# Terrain3D не всегда находит камеру, если она находится внутри инстанса Player.
+	# Привязываем камеру и физическую зону Terrain3D после готовности всех узлов сцены.
+	call_deferred("_setup_terrain_tracking")
+
+
+func _setup_terrain_tracking() -> void:
+	var world_root := get_parent()
+	var terrain := world_root.get_node_or_null("terrain/Terrain3D")
+	if terrain == null:
+		push_warning("Player: не найден узел terrain/Terrain3D для привязки камеры.")
+		return
+
+	if terrain.has_method("set_camera"):
+		terrain.call("set_camera", camera)
+
+	if terrain.has_method("set_collision_target"):
+		terrain.call("set_collision_target", self)
+
+	if terrain.has_method("snap"):
+		terrain.call("snap")
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Пока открыт инвентарь, мышь управляет интерфейсом, а не камерой.

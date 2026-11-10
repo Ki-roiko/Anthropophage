@@ -57,7 +57,7 @@ func _physics_process(_delta: float) -> void:
 		grab_collision_mask,
 		[player.get_rid(), _grabbed_body.get_rid()]
 	)
-	var obstacle_hit := get_world_3d().direct_space_state.intersect_ray(obstacle_query)
+	var obstacle_hit := player.get_world_3d().direct_space_state.intersect_ray(obstacle_query)
 	if not obstacle_hit.is_empty():
 		target_position = obstacle_hit.position - forward * 0.25
 
@@ -83,7 +83,7 @@ func _try_grab() -> void:
 		grab_collision_mask,
 		[player.get_rid()]
 	)
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	var hit := player.get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return
 

@@ -9,9 +9,10 @@ const WORLD_ITEM_SCENE: PackedScene = preload("res://scenes/items/world_item.tsc
 @onready var player: CharacterBody3D = get_parent() as CharacterBody3D
 @onready var camera: Camera3D = player.get_node("Head/Camera3D") as Camera3D
 @onready var inventory: InventoryDataModel = player.get_node("InventoryData") as InventoryDataModel
-@onready var inventory_ui: InventoryUIController = player.get_node("HUD/InventoryUI") as InventoryUIController
+@onready var ui_manager: UIManager = player.get_node("HUD/GameUI/UIManager") as UIManager
 @onready var prompt_label: Label = player.get_node("HUD/InteractionPrompt") as Label
 
+var inventory_ui: InventoryUIController
 var _current_interactable: Node
 var _held_socket: Node3D
 var _held_visual: MeshInstance3D
@@ -19,6 +20,14 @@ var _held_item_id: StringName = &""
 
 
 func _ready() -> void:
+	# UIManager регистрирует PackedScene-панели в своём _ready(). Поэтому ссылку
+	# на InventoryUI получаем после готовности менеджера, а не во время вычисления
+	# @onready-полей, когда дочерние панели ещё могут не существовать.
+	inventory_ui = ui_manager.get_panel(&"inventory") as InventoryUIController
+	if inventory_ui == null:
+		push_error("PlayerInteraction: панель inventory не зарегистрирована в UIManager.")
+		return
+
 	# Held socket живёт на камере: визуальная модель предмета автоматически
 	# следует за взглядом, пока физический объект ещё находится в инвентаре.
 	_held_socket = Node3D.new()
@@ -33,7 +42,7 @@ func _ready() -> void:
 # Каждый физический кадр обновляет объект под перекрестием и текст подсказки.
 # Если инвентарь открыт, игровой луч отключается, чтобы UI не конфликтовал с E.
 func _physics_process(_delta: float) -> void:
-	if inventory_ui.is_open:
+	if ui_manager.has_open_panel():
 		_current_interactable = null
 		prompt_label.text = ""
 		return
@@ -45,7 +54,7 @@ func _physics_process(_delta: float) -> void:
 # Конкретный объект сам реализует interact(), поэтому PlayerInteraction не знает
 # внутреннюю логику двери, контейнера или WorldItem.
 func _unhandled_input(event: InputEvent) -> void:
-	if inventory_ui.is_open:
+	if ui_manager.has_open_panel():
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:

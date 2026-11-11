@@ -66,6 +66,289 @@ docs/                    Документация проекта
 
 Размер сетки сейчас не зашит в интерфейсе: `InventoryUI` получает его из `InventoryDataModel.grid_size`. В текущем коде значение по умолчанию равно `Vector2i(2, 2)`. Если вернуть рабочую сетку 8×6, меняйте значение в модели и проверяйте, что размер панели UI создаётся из этого свойства.
 
+## Редактирование интерфейса инвентаря в Godot Editor
+
+Статическая часть окна инвентаря теперь находится в отдельных сценах. Это позволяет менять оформление через Scene Tree и Inspector, не переписывая `inventory_ui.gd`.
+
+### Главная сцена UI
+
+Откройте:
+
+```text
+scenes/ui/inventory/InventoryUI.tscn
+```
+
+Её структура:
+
+```text
+InventoryUI (Control)
+├── Overlay
+└── Window (PanelContainer)
+	└── MainContainer (MarginContainer)
+		└── Content (VBoxContainer)
+			├── Header (HBoxContainer)
+			│   ├── Title
+			│   └── CloseButton
+			├── Subtitle
+			├── InventoryGrid (Control)
+			│   ├── Cells
+			│   └── ItemsLayer
+			└── HelpText
+```
+
+Эта сцена регистрируется через `scenes/ui/GameUI.tscn` в массиве `HUD/GameUI/UIManager.panel_scenes`.
+
+### Что можно менять в InventoryUI.tscn
+
+Узел `Window`:
+
+- размер окна через `custom_minimum_size` и offsets якоря;
+- фон через Theme Variation `InventoryWindow` в `MainUITheme.tres`;
+- цвет, прозрачность, границы и скругления через Theme Editor.
+
+Узел `Window/MainContainer`:
+
+- отступы от краёв окна;
+- расстояние между заголовком, сеткой и подсказкой.
+
+Узел `Header`:
+
+- расстояние между заголовком и кнопкой закрытия;
+- выравнивание элементов;
+- минимальный размер кнопки.
+
+Узел `Title`:
+
+- текст заголовка;
+- размер шрифта;
+- цвет текста;
+- выравнивание.
+
+Узел `Overlay`:
+
+- цвет затемнения;
+- прозрачность;
+- размер затемнённой области.
+
+Узел `HelpText`:
+
+- текст инструкции;
+- размер и цвет шрифта;
+- перенос строк.
+
+### Размер клеток и расстояние между ними
+
+Размер клетки и промежуток между клетками сейчас задаются экспортируемыми свойствами узла `InventoryUI`:
+
+```gdscript
+@export var cell_size: float = 62.0
+@export var cell_gap: float = 5.0
+```
+
+Откройте `scenes/ui/inventory/InventoryUI.tscn`, выберите корневой узел `InventoryUI` и измените эти значения в Inspector. Скрипт использует их одновременно для:
+
+- размера `InventoryGrid`;
+- положения клеток;
+- размеров карточек;
+- преобразования мыши в координаты сетки;
+- подсветки и предпросмотра.
+
+Не меняйте размер клеток вручную только у одной клетки в `InventoryCell.tscn`: положение и размер остальных клеток рассчитываются из `cell_size` и `cell_gap`.
+
+### Внешний вид клетки
+
+Откройте:
+
+```text
+scenes/ui/inventory/InventoryCell.tscn
+```
+
+Оформление находится в Theme Variation `InventoryCell` ресурса `resources/themes/MainUITheme.tres`. Можно менять:
+
+- `bg_color`;
+- `border_color`;
+- толщину границ;
+- радиус скругления.
+
+В runtime скрипт создаёт клетки через эту PackedScene, поэтому изменение одной сцены применяется ко всей сетке.
+
+Во время перетаскивания `inventory_ui.gd` временно меняет стиль клетки на зелёный или красный. Эти два состояния создаются кодом, потому что их цвет зависит от результата проверки `InventoryDataModel.can_place()`.
+
+## Единая Theme и модульные панели UI
+
+### Где находится общая Theme
+
+Общий ресурс оформления находится здесь:
+
+```text
+resources/themes/MainUITheme.tres
+```
+
+Он назначен корню `scenes/ui/GameUI.tscn`. Все панели, созданные внутри `GameUI/UIManager`, получают этот ресурс через обычное наследование Godot. Поэтому цвет, шрифт и базовый стиль не нужно копировать в каждую сцену.
+
+Чтобы изменить оформление, откройте `MainUITheme.tres` в Inspector и используйте Theme Editor. В ресурсе есть базовые типы `Panel`, `PanelContainer`, `Button`, `Label`, `LineEdit` и `ScrollContainer`, а также специальные Theme Variations:
+
+- `InventoryWindow` — окно инвентаря;
+- `InventoryCell` — клетка сетки;
+- `InventoryItemCard` — карточка предмета;
+- `InventoryCloseButton` — кнопка закрытия;
+- `TestPanel` — демонстрационная панель.
+
+Theme задаёт общий стиль для типа элемента. `theme_override_*` у отдельного узла имеет приоритет и перекрывает Theme, поэтому используйте локальные overrides только для особого элемента. `theme_type_variation` позволяет изменить стиль конкретной разновидности, не меняя все обычные кнопки и панели.
+
+### Структура игрового UI
+
+В `scenes/player.tscn` теперь находится один корневой UI-инстанс:
+
+```text
+Player
+└── HUD (CanvasLayer)
+    └── GameUI (scenes/ui/GameUI.tscn)
+        └── UIManager
+            ├── InventoryUI (создаётся из panel_scenes)
+            └── TestPanel (создаётся из panel_scenes)
+```
+
+`GameUI` отвечает за общий Canvas и Theme. `UIManager` управляет только регистрацией, видимостью и переключением окон. Он не знает, что такое предмет, рецепт или физика. Каждая панель хранит собственную логику внутри своей сцены и скрипта.
+
+Общий контракт находится в `scripts/ui/ui_panel.gd`. Он содержит `panel_id`, `open_action`, `display_mode`, `is_open` и методы `open_panel()`, `close_panel()`, `toggle_panel()`. Сигналы `panel_opened` и `panel_closed` позволяют менеджеру менять курсор, не вмешиваясь в содержимое панели.
+
+`UIManager` находится в `scripts/ui/ui_manager.gd`. В его `panel_scenes` через Inspector добавляются PackedScene панелей. При запуске он создаёт экземпляры, проверяет наличие ID и уникальность ID, а затем хранит их в `registered_panels`.
+
+Поток открытия инвентаря:
+
+```text
+Tab
+ ↓
+Input Map: open_inventory
+ ↓
+UIManager ищет панель с open_action = "open_inventory"
+ ↓
+InventoryUI.open_panel()
+ ↓
+InventoryUI обновляет карточки из InventoryDataModel
+```
+
+При открытии первой панели UIManager сохраняет текущий `Input.mouse_mode` и показывает курсор. Когда закрыта последняя панель, исходный режим возвращается. Поэтому overlay-панель не может случайно вернуть управление игроку, пока другое окно ещё открыто. `exclusive` закрывает другие exclusive-панели перед открытием; `overlay` может находиться поверх уже открытого окна.
+
+### Как добавить новую панель через Editor
+
+Например, для будущего окна крафта:
+
+1. Создайте `scenes/ui/panels/CraftingPanel.tscn`.
+2. Добавьте корневой `Control` и назначьте ему `scripts/ui/ui_panel.gd`.
+3. В Inspector укажите `panel_id = "crafting"`, `open_action = "open_crafting"` и нужный `display_mode`.
+4. Внутри сцены создайте свои `PanelContainer`, `Label`, `Button` и другие узлы. Их логика не должна попадать в `UIManager`.
+5. При необходимости создайте `scripts/ui/crafting_panel.gd`, унаследуйте его от `UIPanel` и назначьте этот скрипт корню вместо базового.
+6. Добавьте действие `open_crafting` в Project Settings → Input Map и назначьте клавишу.
+7. Откройте `scenes/ui/GameUI.tscn`, выберите `UIManager` и добавьте `CraftingPanel.tscn` в массив `Panel Scenes`.
+8. Убедитесь, что `panel_id` уникален и что корень новой сцены действительно является `UIPanel`.
+9. Для общего оформления назначьте Theme `MainUITheme.tres` корню GameUI. Для отдельного вида добавьте Theme Variation в Theme Editor и укажите `theme_type_variation` у нужного узла.
+
+После этого `UIManager` зарегистрирует окно без изменения `inventory_ui.gd` и без добавления условий в `ui_manager.gd`. Если крафту нужны рецепты, он получает их через собственную игровую систему или ресурс рецептов.
+
+### Клавиши открытия панелей
+
+Клавиши открытия задаются только в `project.godot`, а `UIManager` использует имена действий из `open_action`:
+
+```text
+open_inventory  → Tab
+open_test_panel → F7
+```
+
+Проверять нужно именно имя действия и его событие в Project Settings → Input Map. Наличие строки `open_inventory` ещё не означает, что она привязана к Tab. Если в `InputEventKey` указан неправильный `keycode`, действие существует, но нажатие нужной клавиши его не вызовет. Быстрая диагностика: временно выведите `InputMap.action_get_events(&"open_inventory")` и сравните результат с Tab; аналогично проверьте `open_test_panel` и F7.
+
+Все клавиши открытия проходят через один `UIManager._unhandled_input()`. Не добавляйте отдельный обработчик Tab в `InventoryUI` или F7 в конкретную панель: это создаёт два независимых состояния и затрудняет блокировку игрока.
+
+### Тестовая панель
+
+`scenes/ui/panels/TestPanel.tscn` — минимальный пример независимого окна. Он зарегистрирован через `GameUI.tscn`, имеет `panel_id = "test"`, действие `open_test_panel` и режим `overlay`. В текущем Input Map ему назначена клавиша F7. Это пример проверки инфраструктуры, а не готовая игровая функция.
+
+### Частые ошибки модульного UI
+
+- **Панель не открывается:** проверьте, что PackedScene добавлена в `UIManager.panel_scenes`, корневой узел наследуется от `UIPanel`, а `panel_id` не пустой.
+- **Дубликат ID:** две сцены имеют одинаковое `panel_id`. Измените ID в Inspector.
+- **Действие не работает:** добавьте точно такое же имя в Project Settings → Input Map, как указано в `open_action`.
+- **Escape не закрывает окно:** проверьте, что `UIManager.close_on_escape` включён и панель зарегистрирована.
+- **Игрок остаётся заблокированным:** проверьте, что панель закрывается через `close_panel()`, а не только через `visible = false`. Сигнал `panel_closed` нужен для восстановления режима мыши.
+- **Theme не применяется:** проверьте, что `MainUITheme.tres` назначен `GameUI`, а локальный `theme_override_*` не перекрывает нужное свойство.
+- **Variation не находится:** имя в `theme_type_variation` должно в точности совпадать с именем вариации в Theme Editor, включая регистр букв.
+
+### Внешний вид карточки предмета
+
+Откройте:
+
+```text
+scenes/ui/inventory/InventoryItemCard.tscn
+```
+
+Структура карточки:
+
+```text
+InventoryItemCard (Button)
+├── Background (Panel)
+├── Icon (Label)
+└── AmountLabel (Label)
+```
+
+Карточка создаётся динамически из этой сцены для каждого экземпляра предмета. Скрипт меняет только данные конкретного предмета:
+
+- `Icon.text` получает `icon_symbol` из `ItemDefinition`;
+- `AmountLabel.text` получает количество;
+- `position` получает клетку из модели;
+- `size` вычисляется по footprint предмета.
+
+Оформление карточки можно менять в Inspector:
+
+- стиль кнопки `normal`, `hover`, `pressed`, `focus`;
+- цвет и размер `Icon`;
+- цвет и размер `AmountLabel`;
+- расположение дочерних подписей;
+- скругления и границы `StyleBoxFlat`.
+
+Не переименовывайте узлы `Icon` и `AmountLabel` без изменения путей в `scripts/inventory/inventory_ui.gd`: скрипт получает эти узлы по именам, чтобы установить символ и количество.
+
+Размер карточки не нужно задавать вручную в сцене. Он вычисляется по размеру предмета и текущим настройкам сетки. Например, предмет 1×2 получает прямоугольный размер `62×129`, а после поворота 2×1 — `129×62`.
+
+### Какие имена узлов являются частью кода
+
+Не переименовывайте без изменения скрипта:
+
+- `InventoryUI`;
+- `Window`;
+- `MainContainer/Content/InventoryGrid`;
+- `InventoryGrid/Cells`;
+- `InventoryGrid/ItemsLayer`;
+- `Header/CloseButton`;
+- `InventoryItemCard/Icon`;
+- `InventoryItemCard/AmountLabel`.
+
+Остальные визуальные узлы можно добавлять и переименовывать свободнее, если они не используются кодом напрямую. Для нового постоянного элемента добавьте узел в `InventoryUI.tscn`, настройте его через Inspector и подключите сигнал в коде только если он должен выполнять игровое действие.
+
+### Что делает код, а что делает сцена
+
+Сцена отвечает за:
+
+- дерево UI;
+- контейнеры и якоря;
+- размеры окна и отступы;
+- цвета, шрифты и StyleBox;
+- статический текст;
+- внешний вид одной клетки и одной карточки.
+
+`inventory_ui.gd` отвечает за:
+
+- открытие и закрытие;
+- ввод `Tab`, `R`, ЛКМ и ПКМ;
+- создание нужного количества клеток;
+- создание карточек из `InventoryItemCard.tscn`;
+- UID и связь с `InventoryDataModel`;
+- Drag Anchor;
+- проверку размещения;
+- зелёную и красную подсветку.
+
+Добавляя новый декоративный элемент, сначала создайте его в `InventoryUI.tscn`. Не добавляйте `Node.new()` для постоянных элементов в `_build_interface()`: этот метод должен создавать только динамические клетки и настраивать динамические карточки.
+
 ### Что безопасно менять
 
 - Значения `@export` в `player.gd` можно менять через Inspector.
@@ -327,7 +610,7 @@ git status --short --branch
 
 ### `Node not found`
 
-Godot не нашёл узел по пути. Проверьте имена `Head/Camera3D`, `HUD/InventoryUI`, `InventoryData` и структуру `player.tscn`.
+Godot не нашёл узел по пути. Проверьте имена `Head/Camera3D`, `HUD/GameUI/UIManager`, `InventoryData` и структуру `player.tscn`.
 
 ### `Invalid access to property`
 

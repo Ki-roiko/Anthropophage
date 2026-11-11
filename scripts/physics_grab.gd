@@ -13,7 +13,7 @@ extends Node
 
 @onready var player: CharacterBody3D = get_parent() as CharacterBody3D
 @onready var camera: Camera3D = player.get_node("Head/Camera3D") as Camera3D
-@onready var inventory_ui: InventoryUIController = player.get_node("HUD/InventoryUI") as InventoryUIController
+@onready var ui_manager: UIManager = player.get_node("HUD/GameUI/UIManager") as UIManager
 
 var _grab_request_pending: bool = false
 var _grabbed_body: RigidBody3D
@@ -28,7 +28,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# а отпускание сразу снимает захват и возвращает телу обычную симуляцию.
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			if not inventory_ui.is_open:
+			if not ui_manager.has_open_panel():
 				_grab_request_pending = true
 		else:
 			_grab_request_pending = false
@@ -38,7 +38,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(_delta: float) -> void:
 	# Здесь находится весь жизненный цикл захвата: попытка, проверка удержания,
 	# поиск безопасной цели и применение силы к RigidBody3D.
-	if inventory_ui.is_open:
+	if ui_manager.has_open_panel():
 		_grab_request_pending = false
 		_release()
 		return

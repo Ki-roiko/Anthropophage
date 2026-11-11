@@ -46,7 +46,7 @@ extends CharacterBody3D
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
-@onready var inventory_ui: InventoryUIController = $HUD/InventoryUI
+@onready var ui_manager: UIManager = $HUD/GameUI/UIManager
 
 
 
@@ -73,8 +73,8 @@ var strong_fall: bool = false
 ########################################################
 
 func _ready() -> void:
-	# Игровой режим захватывает мышь для обзора. InventoryUI временно меняет
-	# режим на видимый и при закрытии возвращает сохранённое значение.
+	# В обычной игре мышь захвачена для обзора. UIManager временно показывает
+	# её при открытии любой зарегистрированной панели.
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	current_stamina = max_stamina
 	stamina_bar.set("max_value", max_stamina)
@@ -82,7 +82,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Пока открыт инвентарь, мышь управляет интерфейсом, а не камерой.
-	if inventory_ui.is_open:
+	if ui_manager.has_open_panel():
 		return
 
 	if event is InputEventMouseMotion:
@@ -96,7 +96,7 @@ func _physics_process(delta: float) -> void:
 	# обрабатывают столкновения синхронно. Открытый инвентарь блокирует управление,
 	# но оставляет гравитацию, если игрок оказался в воздухе.
 	# Не двигаем игрока и не обновляем игровые эффекты, пока открыт инвентарь.
-	if inventory_ui.is_open:
+	if ui_manager.has_open_panel():
 		# Останавливаем горизонтальное движение, но сохраняем гравитацию.
 		velocity.x = 0.0
 		velocity.z = 0.0

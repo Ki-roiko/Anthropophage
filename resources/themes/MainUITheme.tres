@@ -1,0 +1,141 @@
+[gd_resource type="Theme" load_steps=13 format=3]
+
+[sub_resource type="StyleBoxFlat" id="Panel_main"]
+bg_color = Color(0.055, 0.065, 0.08, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.33, 0.39, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="Panel_secondary"]
+bg_color = Color(0.075, 0.09, 0.11, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.19, 0.23, 0.27, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Button_normal"]
+bg_color = Color(0.18, 0.22, 0.27, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.45, 0.5, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Button_hover"]
+bg_color = Color(0.24, 0.3, 0.36, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65, 0.75, 0.85, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Button_pressed"]
+bg_color = Color(0.12, 0.16, 0.2, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.92, 0.55, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Button_disabled"]
+bg_color = Color(0.1, 0.11, 0.13, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.24, 0.27, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Card_normal"]
+bg_color = Color(0.18, 0.22, 0.27, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65, 0.7, 0.76, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Cell_normal"]
+bg_color = Color(0.075, 0.09, 0.11, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.19, 0.23, 0.27, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Test_panel"]
+bg_color = Color(0.08, 0.1, 0.14, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.55, 0.75, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[resource]
+default_font_size = 14
+Panel/styles/panel = SubResource("Panel_main")
+PanelContainer/styles/panel = SubResource("Panel_main")
+Button/colors/font_color = Color(0.96, 0.97, 0.98, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_disabled_color = Color(0.5, 0.53, 0.57, 1)
+Button/font_sizes/font_size = 14
+Button/styles/normal = SubResource("Button_normal")
+Button/styles/hover = SubResource("Button_hover")
+Button/styles/pressed = SubResource("Button_pressed")
+Button/styles/focus = SubResource("Button_hover")
+Button/styles/disabled = SubResource("Button_disabled")
+Label/colors/font_color = Color(0.96, 0.97, 0.98, 1)
+Label/font_sizes/font_size = 14
+LineEdit/colors/font_color = Color(0.96, 0.97, 0.98, 1)
+ScrollContainer/styles/panel = SubResource("Panel_secondary")
+InventoryWindow/base_type = &"PanelContainer"
+InventoryWindow/styles/panel = SubResource("Panel_main")
+InventoryCell/base_type = &"Panel"
+InventoryCell/styles/panel = SubResource("Cell_normal")
+InventoryItemCard/base_type = &"Button"
+InventoryItemCard/styles/normal = SubResource("Card_normal")
+InventoryItemCard/styles/hover = SubResource("Card_normal")
+InventoryItemCard/styles/pressed = SubResource("Card_normal")
+InventoryItemCard/styles/focus = SubResource("Card_normal")
+InventoryCloseButton/base_type = &"Button"
+InventoryCloseButton/font_sizes/font_size = 20
+TestPanel/base_type = &"PanelContainer"
+TestPanel/styles/panel = SubResource("Test_panel")

@@ -1,16 +1,20 @@
 class_name InventoryUIController
-extends Control
+extends UIPanel
 ## Центральное окно инвентаря. Рисует сетку, предметы и управляет drag & drop.
 
 signal equip_requested(item_uid: int)
 signal drop_requested(item_uid: int)
 
+const INVENTORY_ITEM_CARD_SCENE: PackedScene = preload("res://scenes/ui/inventory/InventoryItemCard.tscn")
+const INVENTORY_CELL_SCENE: PackedScene = preload("res://scenes/ui/inventory/InventoryCell.tscn")
+
 @export var cell_size: float = 62.0
 @export var cell_gap: float = 5.0
 
-@onready var inventory_data: InventoryDataModel = get_node("../../InventoryData") as InventoryDataModel
-
-var is_open: bool = false
+@onready var inventory_data: InventoryDataModel = get_node("../../../../InventoryData") as InventoryDataModel
+@onready var _inventory_grid: Control = $Window/MainContainer/Content/InventoryGrid
+@onready var _cells_container: Control = $Window/MainContainer/Content/InventoryGrid/Cells
+@onready var _close_button: Button = $Window/MainContainer/Content/Header/CloseButton
 
 var _board: Control
 var _item_layer: Control
@@ -31,57 +35,51 @@ var _candidate_valid: bool = false
 # Ориентация карточки во время текущего перетаскивания.
 var _dragging_rotated: bool = false
 
-var _mouse_mode_before_open: Input.MouseMode = Input.MOUSE_MODE_CAPTURED
-
-
 # Создаёт интерфейс один раз и подписывает его на изменения модели инвентаря.
 # Сигнал inventory_changed нужен, чтобы UI обновлялся после подбора, выбрасывания
 # или программного добавления предмета.
 func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 
 	_build_interface()
+	_close_button.pressed.connect(close_panel)
 	inventory_data.inventory_changed.connect(_on_inventory_changed)
 	set_process_input(true)
 
 
 # Открывает окно, показывает курсор и строит карточки из текущего состояния модели.
-func open_inventory() -> void:
+# Открывает панель через общий контракт UIPanel и обновляет карточки предметов.
+# UIManager отдельно отвечает за курсор и конфликт с другими окнами.
+func open_panel() -> void:
+	super.open_panel()
 	if is_open:
-		return
-
-	_mouse_mode_before_open = Input.mouse_mode
-	is_open = true
-	visible = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_rebuild_items()
+		_rebuild_items()
 
 
-# Закрывает окно, отменяет незавершённый drag и возвращает прежний режим мыши.
-func close_inventory() -> void:
+# Совместимый короткий метод для существующих игровых систем, которым нужно
+# закрыть именно инвентарь после экипировки или другого действия.
+func open_inventory() -> void:
+	open_panel()
+
+
+# Закрывает панель через UIManager-состояние, предварительно отменяя drag.
+func close_panel() -> void:
 	if not is_open:
 		return
-
 	_cancel_drag()
-	is_open = false
-	visible = false
-	Input.mouse_mode = _mouse_mode_before_open
+	super.close_panel()
 
 
-# Обрабатывает Tab, R и отпускание ЛКМ. Движение мыши обрабатывается отдельно,
+# Совместимый метод для старых вызовов InventoryUI.
+func close_inventory() -> void:
+	close_panel()
+
+
+# Обрабатывает R и отпускание ЛКМ. Движение мыши обрабатывается отдельно,
 # потому что оно нужно только во время активного drag.
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_TAB:
-			if is_open:
-				close_inventory()
-			else:
-				open_inventory()
-			get_viewport().set_input_as_handled()
-			return
-
 		if is_open and _dragging_uid >= 0 and event.keycode == KEY_R:
 			_rotate_dragged_item()
 			get_viewport().set_input_as_handled()
@@ -105,86 +103,24 @@ func _input(event: InputEvent) -> void:
 # Создаёт фон, сетку и слой карточек. Карточки находятся в отдельном слое,
 # поэтому могут перекрывать клетки и получать собственные события мыши.
 func _build_interface() -> void:
-	var overlay := ColorRect.new()
-	overlay.color = Color(0.015, 0.02, 0.03, 0.78)
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(overlay)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(610.0, 535.0)
-	panel.add_theme_stylebox_override("panel", _make_panel_style())
-	center.add_child(panel)
-
-	var margins := MarginContainer.new()
-	margins.add_theme_constant_override("margin_left", 18)
-	margins.add_theme_constant_override("margin_right", 18)
-	margins.add_theme_constant_override("margin_top", 16)
-	margins.add_theme_constant_override("margin_bottom", 14)
-	panel.add_child(margins)
-
-	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 12)
-	margins.add_child(layout)
-
-	var header := HBoxContainer.new()
-	layout.add_child(header)
-
-	var title := Label.new()
-	title.text = "ИНВЕНТАРЬ"
-	title.add_theme_font_size_override("font_size", 23)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title)
-
-	var close_button := Button.new()
-	close_button.text = "×"
-	close_button.custom_minimum_size = Vector2(36.0, 32.0)
-	close_button.pressed.connect(close_inventory)
-	header.add_child(close_button)
-
-	var subtitle := Label.new()
-	subtitle.text = "Снаряжение"
-	subtitle.add_theme_color_override("font_color", Color(0.68, 0.72, 0.77))
-	layout.add_child(subtitle)
-
-	_board = Control.new()
-	_board.custom_minimum_size = Vector2(
-		inventory_data.grid_size.x * cell_size + (inventory_data.grid_size.x - 1) * cell_gap,
-		inventory_data.grid_size.y * cell_size + (inventory_data.grid_size.y - 1) * cell_gap
-	)
-	_board.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layout.add_child(_board)
+	# InventoryUI.tscn содержит всю статическую структуру окна. Код здесь только
+	# настраивает размеры динамической области под текущую сетку и создаёт клетки.
+	_board = _inventory_grid
+	_board.custom_minimum_size = _grid_to_pixels(inventory_data.grid_size)
 
 	for y in range(inventory_data.grid_size.y):
 		for x in range(inventory_data.grid_size.x):
-			var cell := Panel.new()
+			var cell := INVENTORY_CELL_SCENE.instantiate() as Panel
+			if cell == null:
+				continue
 			cell.position = Vector2(x, y) * (cell_size + cell_gap)
 			cell.size = Vector2(cell_size, cell_size)
 			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			cell.add_theme_stylebox_override(
-				"panel",
-				_make_cell_style(Color(0.075, 0.09, 0.11, 1.0), Color(0.19, 0.23, 0.27, 1.0))
-			)
-			_board.add_child(cell)
+			_cells_container.add_child(cell)
 			_cell_panels.append(cell)
 			_cell_highlight_states.append(-1)
 
-	_item_layer = Control.new()
-	_item_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_item_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_board.add_child(_item_layer)
-
-	var help := Label.new()
-	help.text = "ЛКМ — переместить   •   R — повернуть при переносе   •   ПКМ — выбросить   •   двойной ЛКМ — взять в руки"
-	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	help.add_theme_font_size_override("font_size", 12)
-	help.add_theme_color_override("font_color", Color(0.67, 0.71, 0.76))
-	layout.add_child(help)
+	_item_layer = $Window/MainContainer/Content/InventoryGrid/ItemsLayer
 
 
 func _on_inventory_changed() -> void:
@@ -215,36 +151,27 @@ func _rebuild_items() -> void:
 		var footprint := _get_footprint(definition, bool(entry.get("rotated", false)))
 		var button_size := _footprint_to_pixels(footprint)
 
-		var button := Button.new()
+		var button := INVENTORY_ITEM_CARD_SCENE.instantiate() as Button
+		if button == null:
+			continue
 		button.position = _cell_to_pixel(entry.get("position", Vector2i.ZERO))
 		button.size = button_size
-		button.text = "%s\n×%d" % [
-			definition.icon_symbol,
-			int(entry.get("amount", 1))
-		]
+		var icon := button.get_node("Icon") as Label
+		var amount_label := button.get_node("AmountLabel") as Label
+		if icon != null:
+			icon.text = definition.icon_symbol
+		if amount_label != null:
+			amount_label.text = "×%d" % int(entry.get("amount", 1))
 		button.tooltip_text = "%s\n%s" % [
 			definition.display_name,
 			definition.description
 		]
-		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		button.add_theme_font_size_override("font_size", 13)
-		button.add_theme_color_override("font_color", Color(0.96, 0.97, 0.98))
-		button.add_theme_stylebox_override(
-			"normal",
-			_make_cell_style(definition.display_color.darkened(0.35), definition.display_color)
-		)
-		button.add_theme_stylebox_override(
-			"hover",
-			_make_cell_style(definition.display_color.darkened(0.18), Color(0.88, 0.91, 0.95))
-		)
-		button.add_theme_stylebox_override(
-			"pressed",
-			_make_cell_style(definition.display_color.darkened(0.5), definition.display_color.lightened(0.2))
-		)
-		button.add_theme_stylebox_override(
-			"focus",
-			_make_cell_style(definition.display_color.darkened(0.35), definition.display_color)
-		)
+		# Базовый стиль, шрифт и выравнивание приходят из InventoryItemCard.tscn.
+		# Скрипт меняет только данные конкретного экземпляра, чтобы оформление
+		# можно было редактировать в Inspector без правок кода.
+		var background := button.get_node("Background") as Control
+		if background != null:
+			background.modulate = definition.display_color
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		button.focus_mode = Control.FOCUS_NONE
 		button.gui_input.connect(_on_item_gui_input.bind(item_uid))
@@ -460,13 +387,27 @@ func _footprint_to_pixels(footprint: Vector2i) -> Vector2:
 	)
 
 
+# Возвращает полный размер области сетки без лишнего промежутка после последней
+# клетки. Этот размер нужен статической сцене UI для правильного layout.
+func _grid_to_pixels(grid_size: Vector2i) -> Vector2:
+	return Vector2(
+		grid_size.x * cell_size + maxi(grid_size.x - 1, 0) * cell_gap,
+		grid_size.y * cell_size + maxi(grid_size.y - 1, 0) * cell_gap
+	)
+
+
 # Меняет стиль только у клеток, состояние которых действительно изменилось.
 # Это уменьшает количество создаваемых Control-ресурсов во время drag.
 func _set_cell_highlight(index: int, state: int) -> void:
 	if _cell_highlight_states[index] == state:
 		return
 	_cell_highlight_states[index] = state
-	_cell_panels[index].add_theme_stylebox_override("panel", _get_cell_style(state))
+	if state == 0:
+		# Снимаем временный override и возвращаем стиль из InventoryCell.tscn.
+		# Так базовое оформление клетки полностью редактируется в Inspector.
+		_cell_panels[index].remove_theme_stylebox_override("panel")
+	else:
+		_cell_panels[index].add_theme_stylebox_override("panel", _get_cell_style(state))
 
 
 func _get_cell_style(state: int) -> StyleBoxFlat:

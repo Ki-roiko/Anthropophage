@@ -3,7 +3,7 @@ extends Node
 ## Хранит экземпляры предметов и отвечает за размещение в сетке 8×6.
 
 const ITEM_CATALOG = preload("res://scripts/item_catalog.gd")
-const DEFAULT_GRID_SIZE := Vector2i(2, 2)
+const DEFAULT_GRID_SIZE := Vector2i(6, 4)
 const MAX_GRID_SIDE := 64
 
 signal inventory_changed

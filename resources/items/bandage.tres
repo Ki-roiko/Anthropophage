@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cm1r6ddiwi2e5"]
 
-[ext_resource type="Script" path="res://resources/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bt3ep8jj6kbfi" path="res://resources/items/item_definition.gd" id="1"]
 
 [sub_resource type="BoxMesh" id="BandageMesh"]
 size = Vector3(0.34, 0.09, 0.16)
@@ -15,4 +15,5 @@ max_stack_size = 3
 icon_symbol = "+"
 display_color = Color(0.78, 0.74, 0.62, 1)
 world_mesh = SubResource("BandageMesh")
+collision_size = Vector3(0.38, 0.11, 0.2)
 weight = 0.25

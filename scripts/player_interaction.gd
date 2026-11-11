@@ -19,6 +19,8 @@ var _held_item_id: StringName = &""
 
 
 func _ready() -> void:
+	# Held socket живёт на камере: визуальная модель предмета автоматически
+	# следует за взглядом, пока физический объект ещё находится в инвентаре.
 	_held_socket = Node3D.new()
 	_held_socket.name = "HeldItemSocket"
 	_held_socket.position = Vector3(0.28, -0.22, -0.62)
@@ -28,6 +30,8 @@ func _ready() -> void:
 	inventory_ui.drop_requested.connect(_drop_inventory_item)
 
 
+# Каждый физический кадр обновляет объект под перекрестием и текст подсказки.
+# Если инвентарь открыт, игровой луч отключается, чтобы UI не конфликтовал с E.
 func _physics_process(_delta: float) -> void:
 	if inventory_ui.is_open:
 		_current_interactable = null
@@ -37,6 +41,9 @@ func _physics_process(_delta: float) -> void:
 	_update_interactable()
 
 
+# Обрабатывает E для обычного взаимодействия и F для отпускания предмета в руках.
+# Конкретный объект сам реализует interact(), поэтому PlayerInteraction не знает
+# внутреннюю логику двери, контейнера или WorldItem.
 func _unhandled_input(event: InputEvent) -> void:
 	if inventory_ui.is_open:
 		return
@@ -50,6 +57,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
+# Строит луч от камеры и поднимается по родителям найденного collider-а, пока
+# не найдёт узел с interact(). Это позволяет использовать дочерний CollisionShape3D
+# и разные типы интерактивных объектов.
 func _update_interactable() -> void:
 	_current_interactable = null
 
@@ -58,13 +68,15 @@ func _update_interactable() -> void:
 	var query := PhysicsRayQueryParameters3D.create(
 		ray_from,
 		ray_to,
-		0xFFFFFFFF,
+		1 | 2,
 		[player.get_rid()]
 	)
 	var hit := player.get_world_3d().direct_space_state.intersect_ray(query)
 
 	if not hit.is_empty():
-		var candidate := hit.get("collider") as Node
+		# collider возвращается как Object. Оставляем его обычной ссылкой,
+		# чтобы не потерять RigidBody3D при приведении типа из Dictionary.
+		var candidate = hit.get("collider")
 		while candidate != null:
 			if candidate.has_method("interact"):
 				_current_interactable = candidate
@@ -89,6 +101,7 @@ func _update_interactable() -> void:
 	prompt_label.text = prompt
 
 
+# Возвращает подсказку для удерживаемого предмета, если луч ничего не нашёл.
 func _held_prompt() -> String:
 	if _held_visual != null:
 		var definition := inventory.get_definition(_held_item_id)
@@ -97,6 +110,7 @@ func _held_prompt() -> String:
 	return ""
 
 
+# Вызывает общий интерфейс взаимодействия у объекта, выбранного лучом.
 func _try_interact() -> void:
 	if _current_interactable == null or not is_instance_valid(_current_interactable):
 		return
@@ -105,6 +119,8 @@ func _try_interact() -> void:
 		_current_interactable.call("interact", player)
 
 
+# Переносит одну единицу из инвентаря в визуальный объект перед камерой.
+# Реальная физическая модель появится только при отпускании.
 func _equip_item(item_uid: int) -> void:
 	var entry := inventory.get_item(item_uid)
 	if entry.is_empty():
@@ -130,6 +146,8 @@ func _equip_item(item_uid: int) -> void:
 	inventory_ui.close_inventory()
 
 
+# Сначала создаёт физический предмет в мире, и только после успеха удаляет
+# стопку из инвентаря. Такой порядок защищает предмет от потери при ошибке.
 func _drop_inventory_item(item_uid: int) -> void:
 	var entry := inventory.get_item(item_uid)
 	if entry.is_empty():
@@ -137,45 +155,55 @@ func _drop_inventory_item(item_uid: int) -> void:
 
 	var item_id := StringName(entry.get("item_id", ""))
 	var amount := int(entry.get("amount", 0))
-	var removed := inventory.remove_item(item_uid, amount)
-	if removed <= 0:
-		return
-
 	var forward := -camera.global_basis.z
-	_spawn_world_item(
+	var world_item := _create_world_item(
 		item_id,
-		removed,
+		amount,
 		camera.global_position + forward * 1.0,
 		forward * 1.8 + Vector3.UP * 0.65
 	)
+	if world_item == null:
+		return
+
+	var removed := inventory.remove_item(item_uid, amount)
+	if removed != amount:
+		world_item.queue_free()
 
 
+# Выпускает удерживаемый предмет в мир с небольшим импульсом вперёд.
+# Визуальная копия удаляется только после успешного создания WorldItem.
 func _release_held_item() -> void:
 	if _held_visual == null:
 		return
 
 	var forward := -camera.global_basis.z
-	_spawn_world_item(
+	var world_item := _create_world_item(
 		_held_item_id,
 		1,
 		camera.global_position + forward * 1.0,
 		forward * 1.7 + Vector3.UP * 0.55
 	)
+	if world_item == null:
+		return
 
 	_held_visual.queue_free()
 	_held_visual = null
 	_held_item_id = &""
 
 
-func _spawn_world_item(
+# Создаёт полноценный RigidBody3D из PackedScene, добавляет его в World и
+# прикладывает импульс. Возвращает объект, чтобы вызывающий код мог безопасно
+# завершить операцию инвентаря только после успешного создания.
+func _create_world_item(
 	item_id: StringName,
 	amount: int,
 	spawn_position: Vector3,
 	impulse: Vector3
-) -> void:
+) -> WorldItem:
 	var world_item := WORLD_ITEM_SCENE.instantiate() as WorldItem
 	if world_item == null:
-		return
+		push_error("PlayerInteraction: не удалось создать WorldItem для '%s'." % item_id)
+		return null
 
 	world_item.item_id = item_id
 	world_item.amount = maxi(amount, 1)
@@ -183,7 +211,12 @@ func _spawn_world_item(
 	var world_root := get_tree().current_scene
 	if world_root == null:
 		world_root = player.get_parent()
+	if world_root == null:
+		push_error("PlayerInteraction: не найден корень сцены для выброшенного предмета.")
+		world_item.free()
+		return null
 	world_root.add_child(world_item)
 
 	world_item.global_position = spawn_position
 	world_item.apply_central_impulse(impulse)
+	return world_item

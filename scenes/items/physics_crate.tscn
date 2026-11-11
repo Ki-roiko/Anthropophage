@@ -1,4 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/grabbable_rigidbody.gd" id="1_grabbable"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_crate"]
 size = Vector3(0.6, 0.42, 0.55)
@@ -15,6 +17,7 @@ collision_layer = 2
 collision_mask = 3
 mass = 5.0
 continuous_cd = true
+script = ExtResource("1_grabbable")
 
 [node name="Visual" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_crate")

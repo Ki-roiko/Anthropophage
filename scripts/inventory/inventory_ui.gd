@@ -15,18 +15,28 @@ var is_open: bool = false
 var _board: Control
 var _item_layer: Control
 var _cell_panels: Array[Panel] = []
+var _cell_highlight_states: Array[int] = []
+var _cell_styles: Dictionary = {}
 var _item_buttons: Dictionary = {}
 
 var _dragging_uid: int = -1
 var _dragging_button: Button
-var _drag_offset_px: Vector2 = Vector2.ZERO
+## Клетка внутри предмета, на которую нажал игрок.
+## Например, (1, 1) для правой нижней клетки предмета 2×2.
+var _drag_anchor_cell: Vector2i = Vector2i.ZERO
+# Положение предмета, которое UI предлагает модели при отпускании мыши.
 var _candidate_position: Vector2i = Vector2i.ZERO
+# Результат проверки InventoryDataModel для текущей ориентации и позиции.
 var _candidate_valid: bool = false
+# Ориентация карточки во время текущего перетаскивания.
 var _dragging_rotated: bool = false
 
 var _mouse_mode_before_open: Input.MouseMode = Input.MOUSE_MODE_CAPTURED
 
 
+# Создаёт интерфейс один раз и подписывает его на изменения модели инвентаря.
+# Сигнал inventory_changed нужен, чтобы UI обновлялся после подбора, выбрасывания
+# или программного добавления предмета.
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -37,6 +47,7 @@ func _ready() -> void:
 	set_process_input(true)
 
 
+# Открывает окно, показывает курсор и строит карточки из текущего состояния модели.
 func open_inventory() -> void:
 	if is_open:
 		return
@@ -48,6 +59,7 @@ func open_inventory() -> void:
 	_rebuild_items()
 
 
+# Закрывает окно, отменяет незавершённый drag и возвращает прежний режим мыши.
 func close_inventory() -> void:
 	if not is_open:
 		return
@@ -58,6 +70,8 @@ func close_inventory() -> void:
 	Input.mouse_mode = _mouse_mode_before_open
 
 
+# Обрабатывает Tab, R и отпускание ЛКМ. Движение мыши обрабатывается отдельно,
+# потому что оно нужно только во время активного drag.
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_TAB:
@@ -88,6 +102,8 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+# Создаёт фон, сетку и слой карточек. Карточки находятся в отдельном слое,
+# поэтому могут перекрывать клетки и получать собственные события мыши.
 func _build_interface() -> void:
 	var overlay := ColorRect.new()
 	overlay.color = Color(0.015, 0.02, 0.03, 0.78)
@@ -156,6 +172,7 @@ func _build_interface() -> void:
 			)
 			_board.add_child(cell)
 			_cell_panels.append(cell)
+			_cell_highlight_states.append(-1)
 
 	_item_layer = Control.new()
 	_item_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -171,10 +188,14 @@ func _build_interface() -> void:
 
 
 func _on_inventory_changed() -> void:
+	# Во время drag карточка уже двигается отдельно от модели. Поэтому не
+	# пересоздаём её на каждый промежуточный сигнал и обновляем после завершения.
 	if _dragging_uid < 0:
 		_rebuild_items()
 
 
+# Перерисовывает карточки из модели. Это безопаснее, чем менять данные из UI:
+# модель остаётся источником истины, а UI только показывает её копию.
 func _rebuild_items() -> void:
 	if _item_layer == null:
 		return
@@ -191,14 +212,8 @@ func _rebuild_items() -> void:
 		if definition == null:
 			continue
 
-		var footprint := definition.size
-		if bool(entry.get("rotated", false)):
-			footprint = Vector2i(definition.size.y, definition.size.x)
-
-		var button_size := Vector2(
-			footprint.x * cell_size + (footprint.x - 1) * cell_gap,
-			footprint.y * cell_size + (footprint.y - 1) * cell_gap
-		)
+		var footprint := _get_footprint(definition, bool(entry.get("rotated", false)))
+		var button_size := _footprint_to_pixels(footprint)
 
 		var button := Button.new()
 		button.position = _cell_to_pixel(entry.get("position", Vector2i.ZERO))
@@ -237,6 +252,8 @@ func _rebuild_items() -> void:
 		_item_buttons[item_uid] = button
 
 
+# Начинает drag, определяя клетку внутри предмета под курсором.
+# Anchor хранится в клетках, чтобы предмет не прыгал при захвате за середину.
 func _on_item_gui_input(event: InputEvent, item_uid: int) -> void:
 	if not event is InputEventMouseButton:
 		return
@@ -260,31 +277,33 @@ func _on_item_gui_input(event: InputEvent, item_uid: int) -> void:
 	if button == null:
 		return
 
+	var entry := inventory_data.get_item(item_uid)
+	var definition := inventory_data.get_definition(StringName(entry.get("item_id", "")))
+	if definition == null:
+		return
+
 	_dragging_uid = item_uid
 	_dragging_button = button
-	_drag_offset_px = event.position
-	var entry := inventory_data.get_item(item_uid)
 	_dragging_rotated = bool(entry.get("rotated", false))
+	var footprint := _get_footprint(definition, _dragging_rotated)
+	_drag_anchor_cell = _pixel_to_cell_in_footprint(event.position, footprint)
 	_dragging_button.z_index = 10
 	_dragging_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_update_drag_preview()
 	get_viewport().set_input_as_handled()
 
 
+# Показывает карточку в целочисленной позиции сетки и подсвечивает будущие клетки.
+# Координаты мыши переводятся в локальные координаты board одной transform-операцией.
 func _update_drag_preview() -> void:
 	if _dragging_uid < 0 or _dragging_button == null:
 		return
 
-	var mouse_global := get_global_mouse_position()
-	# Control не предоставляет Node2D.to_local(). Преобразуем координаты курсора
-	# из canvas-пространства в локальные координаты сетки напрямую.
-	var mouse_board_local: Vector2 = _board.get_global_transform_with_canvas().affine_inverse() * mouse_global
-	var item_board_local := mouse_board_local - _drag_offset_px
-	var step := cell_size + cell_gap
-	_candidate_position = Vector2i(
-		floori(item_board_local.x / step),
-		floori(item_board_local.y / step)
-	)
+	var mouse_board_local := _mouse_to_board_local()
+	var mouse_cell := _pixel_to_grid_cell(mouse_board_local)
+	# Позиция предмета считается от захваченной клетки. Поэтому при переносе
+	# правой нижней клетки именно она остаётся под курсором.
+	_candidate_position = mouse_cell - _drag_anchor_cell
 	_candidate_valid = inventory_data.can_place(
 		_dragging_uid,
 		_candidate_position,
@@ -294,21 +313,16 @@ func _update_drag_preview() -> void:
 	var entry := inventory_data.get_item(_dragging_uid)
 	var definition := inventory_data.get_definition(StringName(entry.get("item_id", "")))
 	if definition != null:
-		var footprint := definition.size
-		if _dragging_rotated:
-			footprint = Vector2i(definition.size.y, definition.size.x)
-		var preview_size := Vector2(
-			footprint.x * cell_size + (footprint.x - 1) * cell_gap,
-			footprint.y * cell_size + (footprint.y - 1) * cell_gap
-		)
+		var footprint := _get_footprint(definition, _dragging_rotated)
+		var preview_size := _footprint_to_pixels(footprint)
 		# Карточки не находятся внутри Container, поэтому им не нужен
 		# custom_minimum_size. Задаём точный размер напрямую, без отложенного
 		# пересчёта minimum-size, который превращал прямоугольник в квадрат.
 		_dragging_button.size = preview_size
 
-	# Карточка следует за курсором без скачков по клеткам. Сетка используется
-	# только для подсветки и окончательного размещения при отпускании ЛКМ.
-	_dragging_button.position = item_board_local
+	# Предпросмотр сразу стоит в той же клетке, куда предмет попадёт после
+	# отпускания. Благодаря этому подсветка и карточка используют одну геометрию.
+	_dragging_button.position = _cell_to_pixel(_candidate_position)
 	_dragging_button.modulate = (
 		Color(0.62, 1.0, 0.7, 0.94)
 		if _candidate_valid
@@ -317,6 +331,8 @@ func _update_drag_preview() -> void:
 	_update_cell_highlights()
 
 
+# Поворачивает footprint и anchor одновременно. Так при R сохраняется та же
+# физическая точка захвата, а прямоугольник 1×2 становится 2×1.
 func _rotate_dragged_item() -> void:
 	if _dragging_button == null:
 		return
@@ -326,34 +342,24 @@ func _rotate_dragged_item() -> void:
 	if definition == null or definition.size.x == definition.size.y:
 		return
 
-	# Сохраняем относительную точку, за которую игрок держит карточку. Поэтому
-	# смена 1×2 на 2×1 не переносит её в центр и не меняет клетку под курсором.
-	var old_size := _dragging_button.size
-	var relative_grab := Vector2(
-		clampf(_drag_offset_px.x / maxf(old_size.x, 1.0), 0.0, 1.0),
-		clampf(_drag_offset_px.y / maxf(old_size.y, 1.0), 0.0, 1.0)
-	)
+	# Поворачиваем и сам anchor вместе с прямоугольником. Для поворота по
+	# часовой стрелке клетка (x, y) становится (height - 1 - y, x).
+	var old_footprint := _get_footprint(definition, _dragging_rotated)
 	_dragging_rotated = not _dragging_rotated
-
-	var new_footprint := definition.size
-	if _dragging_rotated:
-		new_footprint = Vector2i(definition.size.y, definition.size.x)
-	var new_size := Vector2(
-		new_footprint.x * cell_size + (new_footprint.x - 1) * cell_gap,
-		new_footprint.y * cell_size + (new_footprint.y - 1) * cell_gap
+	_drag_anchor_cell = Vector2i(
+		old_footprint.y - 1 - _drag_anchor_cell.y,
+		_drag_anchor_cell.x
 	)
-	_drag_offset_px = relative_grab * new_size
+
 	_update_drag_preview()
 
 
+# Переводит результат проверки модели в состояния клеток: обычная, зелёная
+# допустимая или красная занятая/выходящая за границы.
 func _update_cell_highlights() -> void:
 	var entry := inventory_data.get_item(_dragging_uid)
 	var definition := inventory_data.get_definition(StringName(entry.get("item_id", "")))
-	var footprint := Vector2i.ONE
-	if definition != null:
-		footprint = definition.size
-		if _dragging_rotated:
-			footprint = Vector2i(footprint.y, footprint.x)
+	var footprint := _get_footprint(definition, _dragging_rotated)
 
 	for index in range(_cell_panels.size()):
 		var x := index % inventory_data.grid_size.x
@@ -365,22 +371,14 @@ func _update_cell_highlights() -> void:
 			and y < _candidate_position.y + footprint.y
 		)
 
-		var background := Color(0.075, 0.09, 0.11, 1.0)
-		var border := Color(0.19, 0.23, 0.27, 1.0)
+		var state := 0
 		if inside_preview:
-			if _candidate_valid:
-				background = Color(0.12, 0.34, 0.2, 0.95)
-				border = Color(0.38, 0.92, 0.55, 1.0)
-			else:
-				background = Color(0.38, 0.12, 0.12, 0.95)
-				border = Color(1.0, 0.42, 0.36, 1.0)
-
-		_cell_panels[index].add_theme_stylebox_override(
-			"panel",
-			_make_cell_style(background, border)
-		)
+			state = 1 if _candidate_valid else 2
+		_set_cell_highlight(index, state)
 
 
+# Завершает drag: только допустимая позиция передаётся в модель. При ошибке
+# карточки пересоздаются из исходных данных, поэтому предмет не теряется.
 func _finish_drag() -> void:
 	var item_uid := _dragging_uid
 	var target_position := _candidate_position
@@ -397,6 +395,7 @@ func _finish_drag() -> void:
 		_rebuild_items()
 
 
+# Отменяет текущий drag, например при закрытии инвентаря, не меняя модель.
 func _cancel_drag() -> void:
 	if _dragging_uid < 0:
 		return
@@ -408,15 +407,86 @@ func _cancel_drag() -> void:
 
 
 func _clear_cell_highlights() -> void:
-	for cell in _cell_panels:
-		cell.add_theme_stylebox_override(
-			"panel",
-			_make_cell_style(Color(0.075, 0.09, 0.11, 1.0), Color(0.19, 0.23, 0.27, 1.0))
-		)
+	# Возвращает все клетки к обычному стилю после успешного или отменённого drag.
+	for index in range(_cell_panels.size()):
+		_set_cell_highlight(index, 0)
 
 
+# Преобразует клеточные координаты в пиксельную позицию внутри board.
 func _cell_to_pixel(cell_position: Vector2i) -> Vector2:
 	return Vector2(cell_position) * (cell_size + cell_gap)
+
+
+# Возвращает положение мыши в системе координат board, учитывая положение панели
+# и масштаб canvas. Это устраняет расхождение между курсором и сеткой.
+func _mouse_to_board_local() -> Vector2:
+	# Координаты мыши и board могут находиться в разных Control-узлах.
+	# Переводим их через canvas transform, поэтому масштаб окна и положение
+	# панели не требуют отдельных поправок.
+	var mouse_global := get_global_mouse_position()
+	return _board.get_global_transform_with_canvas().affine_inverse() * mouse_global
+
+
+# Преобразует пиксельную позицию board в клетку. Округление выполняется только
+# здесь, поэтому все части drag используют одинаковые границы клеток.
+func _pixel_to_grid_cell(board_position: Vector2) -> Vector2i:
+	var step := cell_size + cell_gap
+	return Vector2i(floori(board_position.x / step), floori(board_position.y / step))
+
+
+# Возвращает клетку внутри footprint, в которой был клик, не выходя за границы
+# предмета даже при попадании по отступу или краю карточки.
+func _pixel_to_cell_in_footprint(pixel_position: Vector2, footprint: Vector2i) -> Vector2i:
+	var cell := _pixel_to_grid_cell(pixel_position)
+	return Vector2i(
+		clampi(cell.x, 0, maxi(footprint.x - 1, 0)),
+		clampi(cell.y, 0, maxi(footprint.y - 1, 0))
+	)
+
+
+# Возвращает фактический прямоугольник предмета после учёта поворота.
+func _get_footprint(definition: ItemDefinition, rotated: bool) -> Vector2i:
+	if definition == null:
+		return Vector2i.ONE
+	return Vector2i(definition.size.y, definition.size.x) if rotated else definition.size
+
+
+# Переводит размер в клетках в размер карточки. Промежуток добавляется только
+# между клетками, поэтому предмет 1×2 не превращается в квадрат.
+func _footprint_to_pixels(footprint: Vector2i) -> Vector2:
+	return Vector2(
+		footprint.x * cell_size + (footprint.x - 1) * cell_gap,
+		footprint.y * cell_size + (footprint.y - 1) * cell_gap
+	)
+
+
+# Меняет стиль только у клеток, состояние которых действительно изменилось.
+# Это уменьшает количество создаваемых Control-ресурсов во время drag.
+func _set_cell_highlight(index: int, state: int) -> void:
+	if _cell_highlight_states[index] == state:
+		return
+	_cell_highlight_states[index] = state
+	_cell_panels[index].add_theme_stylebox_override("panel", _get_cell_style(state))
+
+
+func _get_cell_style(state: int) -> StyleBoxFlat:
+	# Кэширует три стиля клеток, чтобы движение мыши не создавало новые StyleBoxFlat
+	# для каждой клетки на каждом событии InputEventMouseMotion.
+	if _cell_styles.has(state):
+		return _cell_styles[state] as StyleBoxFlat
+
+	var background := Color(0.075, 0.09, 0.11, 1.0)
+	var border := Color(0.19, 0.23, 0.27, 1.0)
+	if state == 1:
+		background = Color(0.12, 0.34, 0.2, 0.95)
+		border = Color(0.38, 0.92, 0.55, 1.0)
+	elif state == 2:
+		background = Color(0.38, 0.12, 0.12, 0.95)
+		border = Color(1.0, 0.42, 0.36, 1.0)
+
+	var style := _make_cell_style(background, border)
+	_cell_styles[state] = style
+	return style
 
 
 func _make_panel_style() -> StyleBoxFlat:

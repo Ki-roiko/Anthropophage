@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://7tld01pxcvsd"]
 
-[ext_resource type="Script" path="res://resources/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bt3ep8jj6kbfi" path="res://resources/items/item_definition.gd" id="1"]
 
 [sub_resource type="BoxMesh" id="MetalScrapMesh"]
 size = Vector3(0.2, 0.12, 0.2)
@@ -10,9 +10,9 @@ script = ExtResource("1")
 item_id = &"metal_scrap"
 display_name = "Металлолом"
 description = "Кусок пригодного для переработки металла."
-size = Vector2i(1, 1)
 max_stack_size = 10
 icon_symbol = "◆"
 display_color = Color(0.46, 0.51, 0.57, 1)
 world_mesh = SubResource("MetalScrapMesh")
+collision_size = Vector3(0.23, 0.14, 0.23)
 weight = 0.8

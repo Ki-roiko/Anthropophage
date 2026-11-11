@@ -1,6 +1,6 @@
 extends CharacterBody3D
 
-##группы экспорта для удобства в редакторе
+## Параметры разделены на группы, чтобы их было проще менять в Inspector.
 @export_group("Moving")
 #чувствительность мыши
 @export var mouse_sensitivity : float = 0.002
@@ -54,7 +54,8 @@ extends CharacterBody3D
 #################### ПЕРЕМЕННЫЕ ДЛЯ СКРИПТА #################
 #############################################################
 
-# переменные для управления камерой
+# Состояние движения и эффектов камеры. Эти значения сохраняются между кадрами,
+# поэтому эффекты могут плавно продолжаться, а не начинаться заново каждый кадр.
 var fall_time: float
 var bob_time: float
 var lean_time: float
@@ -72,27 +73,12 @@ var strong_fall: bool = false
 ########################################################
 
 func _ready() -> void:
+	# Игровой режим захватывает мышь для обзора. InventoryUI временно меняет
+	# режим на видимый и при закрытии возвращает сохранённое значение.
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	current_stamina = max_stamina
 	stamina_bar.set("max_value", max_stamina)
 	stamina_bar.call("set_value", current_stamina, false)
-
-	# Terrain3D не всегда находит камеру, если она находится внутри инстанса Player.
-	# Привязываем камеру и физическую зону Terrain3D после готовности всех узлов сцены.
-	call_deferred("_setup_terrain_tracking")
-
-
-func _setup_terrain_tracking() -> void:
-	var world_root := get_parent()
-	var terrain := world_root.get_node_or_null("terrain/Terrain3D")
-	if terrain == null:
-		push_warning("Player: не найден узел terrain/Terrain3D для привязки камеры.")
-		return
-
-	# Явно назначаем камеру Terrain3D.
-	if terrain.has_method("set_camera"):
-		terrain.call("set_camera", camera)
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Пока открыт инвентарь, мышь управляет интерфейсом, а не камерой.
@@ -100,10 +86,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseMotion:
+		# Относительное движение мыши вращает тело по горизонтали, а Head —
+		# только вертикально. Это не даёт камере перевернуться.
 		mouse_look(event)
 
 
 func _physics_process(delta: float) -> void:
+	# Движение выполняется в физическом цикле, поэтому CharacterBody3D и Terrain3D
+	# обрабатывают столкновения синхронно. Открытый инвентарь блокирует управление,
+	# но оставляет гравитацию, если игрок оказался в воздухе.
 	# Не двигаем игрока и не обновляем игровые эффекты, пока открыт инвентарь.
 	if inventory_ui.is_open:
 		# Останавливаем горизонтальное движение, но сохраняем гравитацию.
@@ -126,6 +117,7 @@ func _physics_process(delta: float) -> void:
 
 # Эффект спринта: покачивангие камеры и увеличение FOV
 func sprint_effect(delta: float) -> void:
+	# Меняет FOV, покачивание и наклон камеры только во время реального спринта.
 	if is_sprinting and Vector2(velocity.x, velocity.z).length() > 0:
 		camera.fov = lerp(camera.fov, sprint_fov, fov_change_speed * delta)
 
@@ -143,6 +135,8 @@ func sprint_effect(delta: float) -> void:
 
 # основная функция для управления камерой мышью
 func mouse_look(event: InputEventMouseMotion) -> void:
+	# Поворачивает игрока вокруг Y и голову вокруг X. Ограничение X сохраняет
+	# привычное управление FPS-камерой.
 	rotate_y(-event.relative.x * mouse_sensitivity)
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
 	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
@@ -150,6 +144,9 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 
 # функция для покачивания камеры при ходьбе
 func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
+	# Два режима эффекта: вертикальное покачивание при ходьбе и вращательное
+	# покачивание во время спринта. Когда игрок не движется, камера возвращается
+	# к исходной позиции через lerp.
 	if rotation_amount == false:
 		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
 			camera_lean(delta, 5, 0.003)
@@ -170,6 +167,8 @@ func head_bob(delta: float, frequency: float, amplitude: float, weight: float, r
 
 # функция для наклона камеры в сторону движения и при спринте
 func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
+	# Создаёт либо направленный наклон от клавиш движения, либо периодический
+	# наклон от синусоиды спринта.
 	if frequency == 0 and amplitude == 0:
 		var input_dir: Vector2 = Input.get_vector(
 			"move_left",
@@ -187,6 +186,8 @@ func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
 
 
 func fall_effect(delta: float, _frequency: float, _amplitude: float) -> void:
+	# Реагирует на скорость падения: сильное падение меняет наклон камеры и
+	# сбрасывает флаг после приземления.
 	if not is_on_floor() and velocity.y < -5:
 		camera.rotation.x = lerp(camera.rotation.x, 1.0, 0.5 * delta)
 	else:
@@ -212,6 +213,8 @@ func fall_effect(delta: float, _frequency: float, _amplitude: float) -> void:
 #######################################################################
 
 func moving(delta: float) -> void:
+	# Читает WASD, рассчитывает скорость, выносливость, прыжок и гравитацию,
+	# затем передаёт velocity в move_and_slide для столкновений игрока.
 
 	head_bob(delta, 10, 0.1, 5, false)
 	var input_dir: Vector2 = Input.get_vector(
@@ -229,6 +232,8 @@ func moving(delta: float) -> void:
 	is_sprinting = false
 
 	if sprint_requested:
+		# Выносливость расходуется непрерывно. После нуля временно остаётся
+		# замедленный спринт, затем обычное движение восстанавливает запас.
 		if current_stamina > 0.0:
 			is_sprinting = true
 			current_speed = normal_sprint_speed

@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://n40c44khpb7b"]
 
-[ext_resource type="PackedScene" uid="uid://dir5y0rb0f7ux" path="res://scenes/player.tscn" id="1_nnsk1"]
 [ext_resource type="PackedScene" uid="uid://b2qtey7421crf" path="res://scenes/terrain.tscn" id="2_rwgxs"]
 [ext_resource type="PackedScene" uid="uid://d3jr60li8d5eo" path="res://models/tower/TowerNew.glb" id="3_4wyf3"]
+[ext_resource type="PackedScene" uid="uid://0nknqpxej2uv" path="res://scenes/player.tscn" id="3_k0juu"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_e5uuo"]
 sky_top_color = Color(0.5285261, 0.75772786, 0.9690928, 1)
@@ -35,9 +35,6 @@ environment = SubResource("Environment_rwgxs")
 transform = Transform3D(0.48303786, -0.11968025, 0.8673817, 0.013692215, 0.9915261, 0.12918448, -0.87549233, -0.050524607, 0.48058334, 0, 66.29329, 0)
 shadow_enabled = true
 
-[node name="player" parent="." unique_id=395011495 instance=ExtResource("1_nnsk1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255.77614, 32.239025, -257.51917)
-
 [node name="terrain" parent="." unique_id=609053471 instance=ExtResource("2_rwgxs")]
 
 [node name="TowerNew" parent="." unique_id=876305968 instance=ExtResource("3_4wyf3")]
@@ -53,5 +50,8 @@ shape = SubResource("CylinderShape3D_0cgy1")
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="TowerNew/StaticBody3D" unique_id=602800962]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4.866699, 0)
 shape = SubResource("CylinderShape3D_af4pb")
+
+[node name="Player" parent="." unique_id=1854722376 instance=ExtResource("3_k0juu")]
+transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.006963153, -255, 31.248737, -255)
 
 [editable path="TowerNew"]

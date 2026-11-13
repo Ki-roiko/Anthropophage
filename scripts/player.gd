@@ -46,12 +46,13 @@ extends CharacterBody3D
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
-
+@onready var inventory_hud: CanvasLayer = $InventoryLayer
 
 
 #############################################################
 #################### ПЕРЕМЕННЫЕ ДЛЯ СКРИПТА #################
 #############################################################
+
 
 # переменные для управления камерой
 var fall_time: float
@@ -76,8 +77,17 @@ func _ready() -> void:
 	stamina_bar.set("max_value", max_stamina)
 	stamina_bar.call("set_value", current_stamina, false)
 
-
 func _unhandled_input(event: InputEvent) -> void:
+
+	if event.is_action_pressed("inventory_open"):
+		_toggle_inventory()
+		get_viewport().set_input_as_handled()
+		return
+	
+	if inventory_hud.visible:
+		return
+	
+
 	if event is InputEventMouseMotion:
 		mouse_look(event)
 
@@ -121,7 +131,6 @@ func head_bob(delta: float, frequency: float, amplitude: float, weight: float, r
 	if rotation_amount == false:
 		if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0:
 			camera_lean(delta, 5, 0.003)
-
 			bob_time += delta * frequency
 			var bobbing_amount = sin(bob_time) * amplitude
 			camera.position.y = camera_start_position.y + bobbing_amount
@@ -232,3 +241,16 @@ func moving(delta: float) -> void:
 		velocity.y -= gravity * delta
 
 	move_and_slide()
+
+
+####################################################################
+############################ ИНВЕНТАРЬ #############################
+####################################################################
+
+func _toggle_inventory() -> void:
+	inventory_hud.visible = not inventory_hud.visible
+	
+	if inventory_hud.visible:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://egtpchbqm0nu"]
+
+[ext_resource type="Script" uid="uid://2wlbtf3n6pc5" path="res://addons/inventory-system-demos/ui/grid/grid_item_stack_ui.gd" id="1_7227p"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0cgy1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_af4pb"]
+bg_color = Color(0.6182662, 0.52280456, 0.92321545, 1)
+
+[node name="GridItemStackUI" type="Panel" unique_id=666490220]
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_0cgy1")
+script = ExtResource("1_7227p")
+stack_style = SubResource("StyleBoxFlat_0cgy1")
+hover_stack_style = SubResource("StyleBoxFlat_af4pb")
+metadata/_custom_type_script = "uid://2wlbtf3n6pc5"
+
+[node name="TextureBG" type="Panel" parent="." unique_id=864758288]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1017969584]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="ItemIcon" type="TextureRect" parent="MarginContainer" unique_id=1324563089]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="StackSizeLabel" type="Label" parent="." unique_id=121424420]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=826516332]
+
+[node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="." unique_id=318267996]

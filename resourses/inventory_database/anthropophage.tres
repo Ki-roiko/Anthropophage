@@ -1,0 +1,21 @@
+[gd_resource type="InventoryDatabase" format=3 uid="uid://cbjlq2qaa28fs"]
+
+[sub_resource type="ItemDefinition" id="ItemDefinition_v1745"]
+id = "bandage"
+max_stack = 3
+name = "Бинт"
+size = Vector2i(1, 2)
+
+[sub_resource type="ItemDefinition" id="ItemDefinition_otxok"]
+id = "scrap"
+max_stack = 5
+name = "Металолом"
+
+[sub_resource type="ItemDefinition" id="ItemDefinition_6olr3"]
+id = "toolbox"
+max_stack = 1
+name = "Ящик с инструментами"
+size = Vector2i(2, 2)
+
+[resource]
+items = Array[ItemDefinition]([SubResource("ItemDefinition_v1745"), SubResource("ItemDefinition_otxok"), SubResource("ItemDefinition_6olr3")])

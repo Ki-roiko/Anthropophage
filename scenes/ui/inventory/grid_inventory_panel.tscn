@@ -1,0 +1,72 @@
+[gd_scene format=3 uid="uid://bjw6kfjl2v83p"]
+
+[ext_resource type="Script" uid="uid://d0wo2gh3a0u7j" path="res://addons/inventory-system-demos/ui/grid/grid_inventory_panel.gd" id="1_3ctnp"]
+[ext_resource type="Texture2D" uid="uid://dpe6uay3gw7q0" path="res://textures/ui/background.png" id="2_121pn"]
+[ext_resource type="Script" uid="uid://ctu3vfl53whl3" path="res://addons/inventory-system-demos/ui/grid/grid_inventory_ui.gd" id="2_j03pv"]
+[ext_resource type="PackedScene" uid="uid://b51t5coaglg5c" path="res://scenes/ui/inventory/grid_slot_ui.tscn" id="3_j03pv"]
+[ext_resource type="PackedScene" uid="uid://egtpchbqm0nu" path="res://scenes/ui/inventory/grid_item_stack_ui.tscn" id="4_ax2ir"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ax2ir"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_blend = true
+corner_detail = 1
+
+[node name="GridInventoryPanel" type="PanelContainer" unique_id=605764222 node_paths=PackedStringArray("grid_inventory_ui")]
+custom_minimum_size = Vector2(460, 336)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("1_3ctnp")
+grid_inventory_ui = NodePath("VBoxContainer/GridInventoryUI")
+metadata/_custom_type_script = "uid://d0wo2gh3a0u7j"
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1469215430]
+layout_mode = 2
+texture = ExtResource("2_121pn")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=2010543955]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer" unique_id=305341748]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer" unique_id=85119965]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+text = "Inventory"
+horizontal_alignment = 1
+
+[node name="GridInventoryUI" type="Control" parent="VBoxContainer" unique_id=1872640374]
+custom_minimum_size = Vector2(406, 288)
+propagate_maximum_size = true
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("2_j03pv")
+grid_slot_ui_scene = ExtResource("3_j03pv")
+grid_item_stack_ui_scene = ExtResource("4_ax2ir")
+grid_slot_size = Vector2(64, 64)
+item_spacing = 4
+select_mode = 1
+selection_style = SubResource("StyleBoxFlat_ax2ir")
+metadata/_custom_type_script = "uid://ctu3vfl53whl3"

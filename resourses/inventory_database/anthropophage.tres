@@ -2,17 +2,20 @@
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_v1745"]
 id = "bandage"
-max_stack = 3
+can_stack = false
+max_stack = 1
 name = "Бинт"
 size = Vector2i(1, 2)
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_otxok"]
 id = "scrap"
-max_stack = 5
+can_stack = false
+max_stack = 1
 name = "Металолом"
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_6olr3"]
 id = "toolbox"
+can_stack = false
 max_stack = 1
 name = "Ящик с инструментами"
 size = Vector2i(2, 2)

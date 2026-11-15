@@ -4,33 +4,24 @@ extends CharacterBody3D
 @export_group("Moving")
 #чувствительность мыши
 @export var mouse_sensitivity : float = 0.002
-
 #скорость движения персонажа (без спринта)
 @export var speed : float = 5.0
-
 #скорость спринта персонажа
 @export var sprint_speed : float = 16.0
-
 #гравитация и прыжок
 @export var gravity : float = 9.8
 @export var jump_velocity : float = 4.5
 
 
 @export_group("Stamina")
-
 # максимальное значение выносливости
 @export_range(1.0, 1000.0, 1.0) var max_stamina: float = 100.0
-
 # продолжительность спринта
 @export_range(0.1, 120.0, 0.1) var sprint_duration: float = 15.0
-
 # продолжительность истощения выносливости
 @export_range(0.1, 30.0, 0.1) var exhaustion_duration: float = 3.0
-
 # продолжительность восстановления выносливости
 @export_range(0.1, 120.0, 0.1) var stamina_recovery_duration: float = 20.0
-
-
 
 
 @export_group("Camera")
@@ -46,7 +37,10 @@ extends CharacterBody3D
 @onready var head : Node3D = $Head
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
+@onready var hud: CanvasLayer = $HUD
 @onready var inventory_hud: CanvasLayer = $InventoryLayer
+@onready var ray : RayCast3D = $Head/RayCast3D
+@onready var inventory : GridInventory = $Inventory
 
 
 #############################################################
@@ -78,24 +72,27 @@ func _ready() -> void:
 	stamina_bar.call("set_value", current_stamina, false)
 
 func _unhandled_input(event: InputEvent) -> void:
-
+	
 	if event.is_action_pressed("inventory_open"):
 		_toggle_inventory()
 		get_viewport().set_input_as_handled()
 		return
-	
 	if inventory_hud.visible:
 		return
 	
-
+	
 	if event is InputEventMouseMotion:
 		mouse_look(event)
-
+	
+	
+	if event.is_action_pressed("interact"):
+		grab_item()
 
 func _physics_process(delta: float) -> void:
 	moving(delta)
 	sprint_effect(delta)
 	fall_effect(delta, 20, 0.1)
+	
 
 ####################################################################
 ############################## КАМЕРА ##############################
@@ -168,15 +165,15 @@ func fall_effect(delta: float, frequency: float, amplitude: float) -> void:
 		camera.rotation.x = lerp(camera.rotation.x, 1.0, 0.5 * delta)
 	else:
 		camera.rotation.x = lerp(camera.rotation.x, camera_start_rotation.x, 5 * delta)
-
+	
 	if not is_on_floor() and velocity.y < -10:
 		strong_fall = true
 		camera.rotation.z = randf_range(camera.rotation.z - lerp(0.01, 0.1, 0.5 * delta), camera.rotation.z + lerp(0.01, 0.1, 0.5 * delta))
 	else:
 		camera.rotation.z = lerp(camera.rotation.z, camera_start_rotation.z, 0.5 * delta)
-
-
-
+	
+	
+	
 	if is_on_floor() and strong_fall:
 		#camera.rotation.x += -0.5
 		strong_fall = false
@@ -249,8 +246,21 @@ func moving(delta: float) -> void:
 
 func _toggle_inventory() -> void:
 	inventory_hud.visible = not inventory_hud.visible
+	hud.visible = not hud.visible
 	
 	if inventory_hud.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+####################################################################
+#################### ПРЕДМЕТЫ И ИНВЕНТАРЬ ##########################
+####################################################################
+
+func grab_item():
+	if ray.is_colliding():
+		var grabbing_item = ray.get_collider()
+		if grabbing_item is WorldItem:
+			if not inventory.add(grabbing_item.item_id, 1, grabbing_item.item_properties): 
+				grabbing_item.queue_free()

@@ -38,9 +38,9 @@ extends CharacterBody3D
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
 @onready var hud: CanvasLayer = $HUD
-@onready var inventory_hud: CanvasLayer = $InventoryLayer
+@onready var inventory_hud: CanvasLayer = $InventorySystem/InventoryLayer
 @onready var ray : RayCast3D = $Head/RayCast3D
-@onready var inventory : GridInventory = $Inventory
+@onready var inventory : GridInventory = $InventorySystem/Inventory
 
 
 #############################################################
@@ -85,7 +85,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		mouse_look(event)
 	
 	
-	if event.is_action_pressed("interact"):
+	if event.is_action_pressed("inventory_interact"):
 		grab_item()
 
 func _physics_process(delta: float) -> void:

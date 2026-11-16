@@ -9,13 +9,14 @@ max_stack = 1
 name = "Бинт"
 icon = ExtResource("1_otxok")
 size = Vector2i(1, 2)
+properties = {"dropped_item": "res://scenes/items/world/WorldItem.tscn"}
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_otxok"]
 id = "scrap"
 can_stack = false
 max_stack = 1
 name = "Металолом"
-properties = {}
+properties = {"dropped_item": "res://scenes/items/world/WorldItem.tscn"}
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_6olr3"]
 id = "toolbox"
@@ -23,7 +24,7 @@ can_stack = false
 max_stack = 1
 name = "Ящик с инструментами"
 size = Vector2i(2, 2)
-properties = {}
+properties = {"dropped_item": "res://scenes/items/world/WorldItem.tscn"}
 
 [resource]
 items = Array[ItemDefinition]([SubResource("ItemDefinition_v1745"), SubResource("ItemDefinition_otxok"), SubResource("ItemDefinition_6olr3")])

@@ -1,4 +1,3 @@
-
 extends Node
 
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel
@@ -11,7 +10,15 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("inventory_rotate") and inventory_layer.visible:
+	if not inventory_layer.visible:
+		return
+
+	if event.is_action_pressed("inventory_drop"):
+		drop_item()
+		get_viewport().set_input_as_handled()
+		return
+
+	if event.is_action_pressed("inventory_rotate"):
 		rotate_item()
 		get_viewport().set_input_as_handled()
 
@@ -35,13 +42,26 @@ func _on_request_transfer_to(
 
 func rotate_item() -> void:
 	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
-	
+
 	if dragged == null:
 		return
-	
+
 	dragged.drag_is_rotated = !dragged.drag_is_rotated
-	
+
 	var preview := GridItemStackUI.active_drag_preview
-	
+
 	if is_instance_valid(preview):
 		preview.set_visual_rotation(dragged.drag_is_rotated)
+
+
+func drop_item() -> void:
+	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
+
+	if dragged == null or not is_instance_valid(dragged.stack):
+		return
+
+	var stack_index: int = inventory.stacks.find(dragged.stack)
+	if stack_index == -1:
+		return
+
+	inventory.drop_from_inventory(stack_index, 1, dragged.stack.properties)

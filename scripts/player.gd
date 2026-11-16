@@ -87,11 +87,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	
 	if event.is_action_pressed("inventory_interact"):
 		grab_item()
+	
+	if event.is_action_pressed("inventory_drop"):
+		drop_item()
+	
 
 func _physics_process(delta: float) -> void:
 	moving(delta)
 	sprint_effect(delta)
-	fall_effect(delta, 20, 0.1)
+	fall_effect(delta)
 	
 
 ####################################################################
@@ -160,7 +164,7 @@ func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
 		camera.rotation.z = camera.rotation.z + lean_amount
 
 
-func fall_effect(delta: float, frequency: float, amplitude: float) -> void:
+func fall_effect(delta: float) -> void:
 	if not is_on_floor() and velocity.y < -5:
 		camera.rotation.x = lerp(camera.rotation.x, 1.0, 0.5 * delta)
 	else:
@@ -264,3 +268,16 @@ func grab_item():
 		if grabbing_item is WorldItem:
 			if not inventory.add(grabbing_item.item_id, 1, grabbing_item.item_properties): 
 				grabbing_item.queue_free()
+
+func drop_item():
+	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
+	
+	if dragged == null:
+		return
+	if not is_instance_valid(dragged.stack):
+		return
+	var stack_index := inventory.stacks.find(dragged.stack)
+	if stack_index == -1:
+		return
+	
+	inventory.drop_from_inventory(stack_index, 1, dragged.stack.properties)

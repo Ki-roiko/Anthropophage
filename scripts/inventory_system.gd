@@ -1,3 +1,4 @@
+
 extends Node
 
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel
@@ -7,11 +8,13 @@ extends Node
 
 func _ready() -> void:
 	inventory_panel.request_transfer_to.connect(_on_request_transfer_to)
-	
+
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("inventory_rotate") and  inventory_layer.visible:
+	if event.is_action_pressed("inventory_rotate") and inventory_layer.visible:
 		rotate_item()
+		get_viewport().set_input_as_handled()
+
 
 func _on_request_transfer_to(
 	origin_inventory: GridInventory,
@@ -21,7 +24,7 @@ func _on_request_transfer_to(
 	amount: int,
 	is_rotated: bool
 ) -> void:
-		origin_inventory.transfer_to(
+	origin_inventory.transfer_to(
 		origin_position,
 		destination_inventory,
 		destination_position,
@@ -29,13 +32,16 @@ func _on_request_transfer_to(
 		is_rotated
 	)
 
+
 func rotate_item() -> void:
-	var selected = inventory_panel.grid_inventory_ui.get_selected_stacks()
-		
-	if not selected.is_empty():
-		
-		for item in selected:
-			var stack = selected[item].stack
-			
-			if inventory.has_stack(stack):
-				inventory.rotate(stack)
+	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
+	
+	if dragged == null:
+		return
+	
+	dragged.drag_is_rotated = !dragged.drag_is_rotated
+	
+	var preview := GridItemStackUI.active_drag_preview
+	
+	if is_instance_valid(preview):
+		preview.set_visual_rotation(dragged.drag_is_rotated)

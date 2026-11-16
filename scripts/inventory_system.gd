@@ -64,4 +64,6 @@ func drop_item() -> void:
 	if stack_index == -1:
 		return
 
-	inventory.drop_from_inventory(stack_index, 1, dragged.stack.properties)
+	var properties: Dictionary = dragged.stack.properties.duplicate(true)
+	get_viewport().gui_cancel_drag()
+	inventory.drop_from_inventory(stack_index, 1, properties)

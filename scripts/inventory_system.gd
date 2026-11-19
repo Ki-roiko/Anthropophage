@@ -13,15 +13,23 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not inventory_layer.visible:
 		return
-
+	 
 	if event.is_action_pressed("inventory_drop"):
 		drop_item()
 		get_viewport().set_input_as_handled()
 		return
-
+	
 	if event.is_action_pressed("inventory_rotate"):
 		rotate_item()
 		get_viewport().set_input_as_handled()
+	
+	if event.is_action_pressed("inventory_interact"):
+		grab_item()
+	
+	if event.is_action_pressed("inventory_drop"):
+		drop_item()
+		
+	
 
 
 func _on_request_transfer_to(

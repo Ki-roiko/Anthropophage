@@ -3,7 +3,6 @@ extends Node
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel
 @onready var inventory: GridInventory = $Inventory
 @onready var inventory_layer: CanvasLayer = $InventoryLayer
-@onready var ray: RayCast3D = $"../Head/RayCast3D"
 
 
 func _ready() -> void:

@@ -10,6 +10,7 @@
 script = ExtResource("1_wcxom")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2127514287]
+visible = false
 mesh = SubResource("BoxMesh_0cgy1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1303514878]

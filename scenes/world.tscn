@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://d3jr60li8d5eo" path="res://models/tower/TowerNew.glb" id="3_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://0nknqpxej2uv" path="res://scenes/player.tscn" id="3_k0juu"]
 [ext_resource type="PackedScene" uid="uid://bfkyb0x1c2f6r" path="res://scenes/items/world/WorldItem.tscn" id="4_k0juu"]
+[ext_resource type="PackedScene" uid="uid://coma7gcphhjti" path="res://models/nature/rock/other/rock1.glb" id="5_71j4m"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_e5uuo"]
 sky_top_color = Color(0.5285261, 0.75772786, 0.9690928, 1)
@@ -58,5 +59,6 @@ transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.0
 [node name="WorldItem" parent="." unique_id=1515561717 instance=ExtResource("4_k0juu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -254.39316, 30.907665, -253.41808)
 item_id = "bandage"
+item_mesh = ExtResource("5_71j4m")
 
 [editable path="TowerNew"]

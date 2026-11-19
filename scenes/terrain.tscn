@@ -71,9 +71,11 @@ lod0_range = 128.0
 name = "packed_albedo_height"
 albedo_texture = ExtResource("1_a0ket")
 normal_texture = ExtResource("2_oqplg")
-uv_scale = 0.034
-detiling_rotation = 0.05
-detiling_shift = 0.504
+normal_depth = 0.44
+roughness = 1.0
+uv_scale = 0.114
+detiling_rotation = 0.142
+detiling_shift = 0.348
 
 [sub_resource type="Image" id="Image_vjhlg"]
 data = {
@@ -92,9 +94,9 @@ name = "grass"
 id = 1
 albedo_texture = ExtResource("3_vjhlg")
 normal_texture = SubResource("ImageTexture_tw12r")
-uv_scale = 0.034
-detiling_rotation = 0.16
-detiling_shift = 0.248
+uv_scale = 1.046
+detiling_rotation = 0.43
+detiling_shift = 0.405
 
 [sub_resource type="Terrain3DAssets" id="Terrain3DAssets_xqm8g"]
 mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_a0ket")])

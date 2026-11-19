@@ -22,13 +22,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("inventory_rotate"):
 		rotate_item()
 		get_viewport().set_input_as_handled()
-	
-	if event.is_action_pressed("inventory_interact"):
-		grab_item()
-	
-	if event.is_action_pressed("inventory_drop"):
-		drop_item()
-		
+
+
 	
 
 
@@ -76,10 +71,3 @@ func drop_item() -> void:
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
 	inventory.drop_from_inventory(stack_index, 1, properties)
-
-func grab_item():
-	if ray.is_colliding():
-		var grabbing_item = ray.get_collider()
-		if grabbing_item is WorldItem:
-			if not inventory.add(grabbing_item.item_id, 1, grabbing_item.item_properties): 
-				grabbing_item.queue_free()

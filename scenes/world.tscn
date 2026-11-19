@@ -56,7 +56,7 @@ shape = SubResource("CylinderShape3D_af4pb")
 transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.006963153, -255, 31.248737, -255)
 
 [node name="WorldItem" parent="." unique_id=1515561717 instance=ExtResource("4_k0juu")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -255, 5.6199284, -247.89053)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -254.39316, 30.907665, -253.41808)
 item_id = "bandage"
 
 [editable path="TowerNew"]

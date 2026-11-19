@@ -3,6 +3,7 @@ extends Node
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel
 @onready var inventory: GridInventory = $Inventory
 @onready var inventory_layer: CanvasLayer = $InventoryLayer
+@onready var ray: RayCast3D = $"../Head/RayCast3D"
 
 
 func _ready() -> void:
@@ -67,3 +68,10 @@ func drop_item() -> void:
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
 	inventory.drop_from_inventory(stack_index, 1, properties)
+
+func grab_item():
+	if ray.is_colliding():
+		var grabbing_item = ray.get_collider()
+		if grabbing_item is WorldItem:
+			if not inventory.add(grabbing_item.item_id, 1, grabbing_item.item_properties): 
+				grabbing_item.queue_free()

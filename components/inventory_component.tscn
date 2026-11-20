@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cftrwcojjcx55" path="res://scripts/inventory_component.gd" id="1_8hp1q"]
 [ext_resource type="InventoryDatabase" uid="uid://cbjlq2qaa28fs" path="res://resourses/inventory_database/anthropophage.tres" id="2_w04kx"]
-[ext_resource type="Script" uid="uid://d180mgvqy7738" path="res://scripts/dropper.gd" id="3_m61u8"]
 [ext_resource type="PackedScene" uid="uid://bjw6kfjl2v83p" path="res://scenes/ui/inventory/grid_inventory_panel.tscn" id="4_mryu8"]
 
 [node name="InventoryComponent" type="Node" unique_id=556867217]
@@ -11,9 +10,6 @@ script = ExtResource("1_8hp1q")
 [node name="Inventory" type="GridInventory" parent="." unique_id=684688971]
 size = Vector2i(6, 4)
 database = ExtResource("2_w04kx")
-
-[node name="Dropper" type="Node" parent="." unique_id=1329819968]
-script = ExtResource("3_m61u8")
 
 [node name="InventoryLayer" type="CanvasLayer" parent="." unique_id=793883970]
 visible = false

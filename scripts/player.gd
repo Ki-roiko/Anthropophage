@@ -39,7 +39,6 @@ extends CharacterBody3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
 @onready var hud: CanvasLayer = $HUD
 @onready var inventory_hud: CanvasLayer = $InventoryComponent/InventoryLayer
-@onready var ray : RayCast3D = $Head/RayCast3D
 @onready var inventory : GridInventory = $InventoryComponent/Inventory
 @onready var inventory_component: InventoryComponent = $InventoryComponent
 @onready var grab_drop_component: GrabDropComponent = $GrabDropComponent
@@ -121,7 +120,6 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 	rotate_y(-event.relative.x * mouse_sensitivity)
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
 	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
-	rotate_y(-event.relative.x * mouse_sensitivity)
 	grab_drop_component.rotate_x(-event.relative.y * mouse_sensitivity)
 	grab_drop_component.rotation.x = clampf(grab_drop_component.rotation.x, -PI/2, PI/2)
 

@@ -4,6 +4,9 @@ class_name HudComponent extends Node
 @onready var player: CharacterBody3D = get_parent()
 @onready var hud_layer: CanvasLayer = $HudLayer
 
+func _ready() -> void:
+	pass
+
 func _unhandled_input(event: InputEvent) -> void:
 	
 	if event.is_action_pressed("inventory_open"):

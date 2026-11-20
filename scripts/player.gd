@@ -3,14 +3,14 @@ extends CharacterBody3D
 ##группы экспорта для удобства в редакторе
 @export_group("Moving")
 #чувствительность мыши
-@export var mouse_sensitivity : float = 0.002
+@export var mouse_sensitivity: float = 0.002
 #скорость движения персонажа (без спринта)
-@export var speed : float = 5.0
+@export var speed: float = 5.0
 #скорость спринта персонажа
-@export var sprint_speed : float = 16.0
+@export var sprint_speed: float = 16.0
 #гравитация и прыжок
-@export var gravity : float = 9.8
-@export var jump_velocity : float = 4.5
+@export var gravity: float = 9.8
+@export var jump_velocity: float = 4.5
 
 
 @export_group("Stamina")
@@ -26,16 +26,16 @@ extends CharacterBody3D
 
 @export_group("Camera")
 # стандартное и спринтовое поле зрения камеры, а также скорость изменения поля зрения
-@export var standard_fov : float = 80.0
-@export var sprint_fov : float = 95.0
-@export var fov_change_speed : float = 8
+@export var standard_fov: float = 80.0
+@export var sprint_fov: float = 95.0
+@export var fov_change_speed: float = 8
 
 ############################################################
 ##################### ССЫЛКИ НА НОДЫ #######################
 ############################################################
 
-@onready var head : Node3D = $Head
-@onready var camera : Camera3D = $Head/Camera3D
+@onready var head: Node3D = $Head
+@onready var camera: Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
 @onready var hud: CanvasLayer = $HUD
 @onready var inventory_component: InventoryComponent = $InventoryComponent
@@ -66,10 +66,9 @@ var strong_fall: bool = false
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	current_stamina = max_stamina
+	#stamina_bar.set("max_value", max_stamina)
+	#stamina_bar.call("set_value", current_stamina, false)
 
-
-
-		
 
 func _physics_process(delta: float) -> void:
 	if not inventory_component.inventory_layer.visible:
@@ -104,9 +103,9 @@ func sprint_effect(delta: float) -> void:
 func mouse_look(event: InputEventMouseMotion) -> void:
 	rotate_y(-event.relative.x * mouse_sensitivity)
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
-	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
+	head.rotation.x = clampf(head.rotation.x, -PI / 2, PI / 2)
 	grab_drop_component.rotate_x(-event.relative.y * mouse_sensitivity)
-	grab_drop_component.rotation.x = clampf(grab_drop_component.rotation.x, -PI/2, PI/2)
+	grab_drop_component.rotation.x = clampf(grab_drop_component.rotation.x, -PI / 2, PI / 2)
 
 # функция для покачивания камеры при ходьбе
 func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
@@ -136,7 +135,7 @@ func camera_lean(delta: float, frequency: float, amplitude: float) -> void:
 			"move_forward",
 			"move_back"
 		).normalized()
-		var target_lean = -input_dir.x * 0.05
+		var target_lean = - input_dir.x * 0.05
 		var current_lean = camera.rotation.z
 		camera.rotation.z = lerp(current_lean, target_lean, 5 * delta)
 	else:
@@ -158,12 +157,10 @@ func fall_effect(delta: float) -> void:
 		camera.rotation.z = lerp(camera.rotation.z, camera_start_rotation.z, 0.5 * delta)
 	
 	
-	
 	if is_on_floor() and strong_fall:
 		#camera.rotation.x += -0.5
 		strong_fall = false
 		fall_time = 0.0
-
 
 
 #######################################################################
@@ -171,7 +168,6 @@ func fall_effect(delta: float) -> void:
 #######################################################################
 
 func moving(delta: float) -> void:
-
 	head_bob(delta, 10, 0.1, 5, false)
 	var input_dir: Vector2 = Input.get_vector(
 		"move_left",
@@ -228,8 +224,6 @@ func moving(delta: float) -> void:
 ####################################################################
 ############################ ИНВЕНТАРЬ #############################
 ####################################################################
-
-
 
 
 ####################################################################

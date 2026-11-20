@@ -4,7 +4,6 @@ extends Node3D
 @onready var ray: RayCast3D = $RayCast3D
 @onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
 @onready var drop_point: Marker3D = $DropPoint
-@onready var hud_component:HudComponent = get_parent().get_node("HudComponent")
 
 func _ready() -> void:
 	inventory_component.inventory.request_drop_item.connect(item_dropper)

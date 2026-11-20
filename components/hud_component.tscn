@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://components/scripts/hud_component.gd" id="2_script"]
 
 [node name="HudComponent" type="Node" unique_id=225065007]
+script = ExtResource("2_script")
 
 [node name="HudLayer" type="CanvasLayer" parent="." unique_id=69415017]
 

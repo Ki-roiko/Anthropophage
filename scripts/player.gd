@@ -38,7 +38,6 @@ extends CharacterBody3D
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
 @onready var hud: CanvasLayer = $HUD
-@onready var inventory_hud: CanvasLayer = $InventoryComponent/InventoryLayer
 @onready var inventory : GridInventory = $InventoryComponent/Inventory
 @onready var inventory_component: InventoryComponent = $InventoryComponent
 @onready var grab_drop_component: GrabDropComponent = $GrabDropComponent
@@ -77,7 +76,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_inventory()
 		get_viewport().set_input_as_handled()
 		return
-	if inventory_hud.visible:
+	if inventory_component.inventory_layer.visible:
 		return
 	
 	
@@ -87,7 +86,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		
 
 func _physics_process(delta: float) -> void:
-	if not inventory_hud.visible:
+	if not inventory_component.inventory_layer.visible:
 		moving(delta)
 		sprint_effect(delta)
 	fall_effect(delta)

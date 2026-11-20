@@ -1,11 +1,9 @@
 [gd_scene format=3 uid="uid://0nknqpxej2uv"]
 
 [ext_resource type="Script" uid="uid://blgv0q4pc3u2b" path="res://scripts/player.gd" id="1_3vyb7"]
-[ext_resource type="PackedScene" uid="uid://bjw6kfjl2v83p" path="res://scenes/ui/inventory/grid_inventory_panel.tscn" id="2_dqkch"]
+[ext_resource type="PackedScene" uid="uid://dvhdm6wl0gtsl" path="res://components/inventory_component.tscn" id="2_qhqgy"]
 [ext_resource type="PackedScene" uid="uid://c4s7taminab4r" path="res://scenes/ui/stamina_bar.tscn" id="2_stamina"]
-[ext_resource type="InventoryDatabase" uid="uid://cbjlq2qaa28fs" path="res://resourses/inventory_database/anthropophage.tres" id="3_qhqgy"]
-[ext_resource type="Script" uid="uid://cftrwcojjcx55" path="res://scripts/inventory_system.gd" id="3_qlg0r"]
-[ext_resource type="Script" uid="uid://d180mgvqy7738" path="res://scripts/dropper.gd" id="6_tuyoq"]
+[ext_resource type="Script" uid="uid://cc0qvycycungv" path="res://components/scripts/grab_drop_component.gd" id="4_dqkch"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
 
@@ -35,12 +33,6 @@ transform = Transform3D(0.77262527, 0, 0, 0, 0.34440064, 0, 0, 0, 0.34243274, 0,
 layers = 2
 mesh = SubResource("BoxMesh_3vyb7")
 
-[node name="RayCast3D" type="RayCast3D" parent="Head" unique_id=1077344871]
-target_position = Vector3(0, 0, -2.5)
-
-[node name="DropPoint" type="Marker3D" parent="Head" unique_id=634297511]
-transform = Transform3D(1.0000004, 0, 0, 0, 1, 0, 0, 0, 1.0000004, 0.010625834, 0, -1.5259719)
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=108827502]
 shape = SubResource("CapsuleShape3D_g2els")
 
@@ -49,6 +41,11 @@ shape = SubResource("CapsuleShape3D_g2els")
 [node name="BodyMesh" type="MeshInstance3D" parent="Skin" unique_id=1099768263]
 layers = 2
 mesh = SubResource("CapsuleMesh_qhqgy")
+
+[node name="InventoryComponent" parent="." unique_id=556867217 instance=ExtResource("2_qhqgy")]
+unique_name_in_owner = true
+
+[node name="HudComponent" type="Node" parent="." unique_id=1193172847]
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1203947561]
 
@@ -73,18 +70,13 @@ grow_vertical = 2
 size_flags_horizontal = 4
 text = "    +"
 
-[node name="InventoryComponent" type="Node" parent="." unique_id=1195863428]
-script = ExtResource("3_qlg0r")
+[node name="GrabDropComponent" type="Node3D" parent="." unique_id=1660592755]
+transform = Transform3D(1.0000004, 0, 0, 0, 1, 0, 0, 0, 1.0000004, 0, 0.6611451, 0)
+script = ExtResource("4_dqkch")
 
-[node name="InventoryLayer" type="CanvasLayer" parent="InventoryComponent" unique_id=1638506713]
-visible = false
+[node name="RayCast3D" type="RayCast3D" parent="GrabDropComponent" unique_id=1077344871]
+transform = Transform3D(1.0000001, 0, 0, 0, 1, 0, 0, 0, 1.0000001, 0, 0, 0)
+target_position = Vector3(0, 0, -2.5)
 
-[node name="GridInventoryPanel" parent="InventoryComponent/InventoryLayer" unique_id=605764222 node_paths=PackedStringArray("inventory") instance=ExtResource("2_dqkch")]
-inventory = NodePath("../../Inventory")
-
-[node name="Inventory" type="GridInventory" parent="InventoryComponent" unique_id=808096238]
-size = Vector2i(6, 4)
-database = ExtResource("3_qhqgy")
-
-[node name="Dropper" type="Node" parent="InventoryComponent" unique_id=133740129]
-script = ExtResource("6_tuyoq")
+[node name="DropPoint" type="Marker3D" parent="GrabDropComponent" unique_id=634297511]
+transform = Transform3D(1.0000005, 0, -4.656613e-10, 0, 1, 0, 4.656613e-10, 0, 1.0000005, 0.012469179, 0, -1.7906941)

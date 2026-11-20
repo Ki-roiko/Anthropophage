@@ -42,7 +42,7 @@ extends CharacterBody3D
 @onready var ray : RayCast3D = $Head/RayCast3D
 @onready var inventory : GridInventory = $InventoryComponent/Inventory
 @onready var inventory_component: InventoryComponent = $InventoryComponent
-
+@onready var grab_drop_component: GrabDropComponent = $GrabDropComponent
 
 #############################################################
 #################### ПЕРЕМЕННЫЕ ДЛЯ СКРИПТА #################
@@ -85,11 +85,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		mouse_look(event)
 
-	if event.is_action_pressed("inventory_interact"):
-		grab_item()
-	
-	if event.is_action_pressed("inventory_drop"):
-		drop_item()
 		
 
 func _physics_process(delta: float) -> void:
@@ -126,7 +121,9 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 	rotate_y(-event.relative.x * mouse_sensitivity)
 	head.rotate_x(-event.relative.y * mouse_sensitivity)
 	head.rotation.x = clampf(head.rotation.x, -PI/2, PI/2)
-
+	rotate_y(-event.relative.x * mouse_sensitivity)
+	grab_drop_component.rotate_x(-event.relative.y * mouse_sensitivity)
+	grab_drop_component.rotation.x = clampf(grab_drop_component.rotation.x, -PI/2, PI/2)
 
 # функция для покачивания камеры при ходьбе
 func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:
@@ -262,24 +259,3 @@ func _toggle_inventory() -> void:
 ####################################################################
 #################### ПРЕДМЕТЫ И ИНВЕНТАРЬ ##########################
 ####################################################################
-
-func drop_item() -> void:
-	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
-
-	if dragged == null or not is_instance_valid(dragged.stack):
-		return
-
-	var stack_index: int = inventory.stacks.find(dragged.stack)
-	if stack_index == -1:
-		return
-
-	var properties: Dictionary = dragged.stack.properties.duplicate(true)
-	get_viewport().gui_cancel_drag()
-	inventory.drop_from_inventory(stack_index, 1, properties)
-
-func grab_item():
-	if ray.is_colliding():
-		var grabbing_item = ray.get_collider()
-		if grabbing_item is WorldItem:
-			if not inventory.add(grabbing_item.item_id, 1, grabbing_item.item_properties): 
-				grabbing_item.queue_free()

@@ -71,3 +71,6 @@ func drop_item() -> void:
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
 	inventory.drop_from_inventory(stack_index, 1, properties)
+
+func add_item(item_id: String, amount: int, properties: Dictionary) -> int:
+	return inventory.add_item(item_id, amount, properties)

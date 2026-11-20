@@ -3,8 +3,7 @@ class_name HudComponent extends Node
 @onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
 @onready var hud_layer: CanvasLayer = $HudLayer
 
-func _ready() -> void:
-	pass
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	
@@ -12,7 +11,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_inventory()
 		get_viewport().set_input_as_handled()
 		return
-	if inventory_component.inventory_layer.visible:
+	if inventory_component.is_inventory_open():
 		return
 
 

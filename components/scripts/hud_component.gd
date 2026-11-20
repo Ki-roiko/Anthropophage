@@ -19,10 +19,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _toggle_inventory() -> void:
-	inventory_component.inventory_layer.visible = not inventory_component.inventory_layer.visible
-	hud_layer.visible = not hud_layer.visible
-	
-	if inventory_component.inventory_layer.visible:
+	var is_open := inventory_component.toggle_inventory()
+	hud_layer.visible = not is_open
+
+	if is_open:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

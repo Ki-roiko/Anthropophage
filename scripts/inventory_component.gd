@@ -84,5 +84,10 @@ func get_dropped_item_scene_path(item_id: String) -> String:
 
 	return str(definition.properties.get("dropped_item", ""))
 
-func get_item_id(id: String) -> ItemDefinition:
-	return inventory.database.get_item(id)
+func is_inventory_open() -> bool:
+	return inventory_layer.visible
+
+
+func toggle_inventory() -> bool:
+	inventory_layer.visible = not inventory_layer.visible
+	return inventory_layer.visible

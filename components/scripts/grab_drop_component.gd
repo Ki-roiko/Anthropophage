@@ -10,8 +10,12 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if inventory_component.is_inventory_open():
+		return
+
 	if event.is_action_pressed("inventory_interact"):
 		grab_item()
+		get_viewport().set_input_as_handled()
 
 
 
@@ -21,18 +25,13 @@ func grab_item():
 	if ray.is_colliding():
 		var grabbing_item = ray.get_collider()
 		if grabbing_item is WorldItem:
-			if not inventory_component.add_item(grabbing_item.item_id, 1, grabbing_item.item_properties): 
+			if inventory_component.add_item(grabbing_item.item_id, 1, grabbing_item.item_properties) == 0:
 				grabbing_item.queue_free()
 
 
 
 func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
 	if amount <= 0:
-		return
-
-	var definition = inventory_component.get_item_id(id)
-	if definition == null:
-		push_warning("Cannot drop item '%s': definition was not found." % id)
 		return
 
 	var path := inventory_component.get_dropped_item_scene_path(id)

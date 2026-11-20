@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://c4s7taminab4r" path="res://scenes/ui/stamina_bar.tscn" id="1_hrkcy"]
 
+[ext_resource type="Script" path="res://components/scripts/hud_component.gd" id="2_script"]
+
 [node name="HudComponent" type="Node" unique_id=225065007]
 
 [node name="HudLayer" type="CanvasLayer" parent="." unique_id=69415017]

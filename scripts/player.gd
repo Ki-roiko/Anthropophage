@@ -71,14 +71,14 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not inventory_component.inventory_layer.visible:
+	if not inventory_component.is_inventory_open():
 		moving(delta)
 		sprint_effect(delta)
 	fall_effect(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if inventory_component.inventory_layer.visible:
+	if inventory_component.is_inventory_open():
 		return
 
 	if event is InputEventMouseMotion:

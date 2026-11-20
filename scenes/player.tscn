@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" uid="uid://blgv0q4pc3u2b" path="res://scripts/player.gd" id="1_3vyb7"]
 [ext_resource type="PackedScene" uid="uid://dvhdm6wl0gtsl" path="res://components/inventory_component.tscn" id="2_qhqgy"]
-[ext_resource type="PackedScene" uid="uid://c4s7taminab4r" path="res://scenes/ui/stamina_bar.tscn" id="2_stamina"]
+[ext_resource type="PackedScene" uid="uid://d1gnb42u2flyj" path="res://components/hud_component.tscn" id="3_qlg0r"]
 [ext_resource type="Script" uid="uid://cc0qvycycungv" path="res://components/scripts/grab_drop_component.gd" id="4_dqkch"]
+[ext_resource type="Script" uid="uid://bel27q3f18ba3" path="res://components/scripts/hud_component.gd" id="4_tuyoq"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
 
@@ -14,9 +15,18 @@
 [node name="Player" type="CharacterBody3D" unique_id=1854722376]
 transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.006963153, 0, 0, 0)
 script = ExtResource("1_3vyb7")
+mouse_sensitivity = null
 speed = 4.0
 sprint_speed = 8.0
 gravity = 24.5
+jump_velocity = null
+max_stamina = null
+sprint_duration = null
+exhaustion_duration = null
+stamina_recovery_duration = null
+standard_fov = null
+sprint_fov = null
+fov_change_speed = null
 
 [node name="Head" type="Node3D" parent="." unique_id=1971699787]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6176, 0)
@@ -45,30 +55,8 @@ mesh = SubResource("CapsuleMesh_qhqgy")
 [node name="InventoryComponent" parent="." unique_id=556867217 instance=ExtResource("2_qhqgy")]
 unique_name_in_owner = true
 
-[node name="HudComponent" type="Node" parent="." unique_id=1193172847]
-
-[node name="HUD" type="CanvasLayer" parent="." unique_id=1203947561]
-
-[node name="StaminaBar" parent="HUD" unique_id=1203947562 instance=ExtResource("2_stamina")]
-offset_left = 20.0
-offset_top = 60.0
-offset_right = 212.0
-offset_bottom = 88.0
-
-[node name="Label" type="Label" parent="HUD" unique_id=1769701130]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -11.5
-offset_right = 20.0
-offset_bottom = 11.5
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
-text = "    +"
+[node name="HudComponent" parent="." unique_id=225065007 instance=ExtResource("3_qlg0r")]
+script = ExtResource("4_tuyoq")
 
 [node name="GrabDropComponent" type="Node3D" parent="." unique_id=1660592755]
 transform = Transform3D(1.0000004, 0, 0, 0, 1, 0, 0, 0, 1.0000004, 0, 0.6611451, 0)

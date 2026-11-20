@@ -38,7 +38,6 @@ extends CharacterBody3D
 @onready var camera : Camera3D = $Head/Camera3D
 @onready var stamina_bar: Node = $HUD/StaminaBar
 @onready var hud: CanvasLayer = $HUD
-@onready var inventory : GridInventory = $InventoryComponent/Inventory
 @onready var inventory_component: InventoryComponent = $InventoryComponent
 @onready var grab_drop_component: GrabDropComponent = $GrabDropComponent
 
@@ -67,21 +66,8 @@ var strong_fall: bool = false
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	current_stamina = max_stamina
-	stamina_bar.set("max_value", max_stamina)
-	stamina_bar.call("set_value", current_stamina, false)
 
-func _unhandled_input(event: InputEvent) -> void:
-	
-	if event.is_action_pressed("inventory_open"):
-		_toggle_inventory()
-		get_viewport().set_input_as_handled()
-		return
-	if inventory_component.inventory_layer.visible:
-		return
-	
-	
-	if event is InputEventMouseMotion:
-		mouse_look(event)
+
 
 		
 
@@ -243,14 +229,7 @@ func moving(delta: float) -> void:
 ############################ ИНВЕНТАРЬ #############################
 ####################################################################
 
-func _toggle_inventory() -> void:
-	inventory_hud.visible = not inventory_hud.visible
-	hud.visible = not hud.visible
-	
-	if inventory_hud.visible:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	else:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
 
 
 ####################################################################

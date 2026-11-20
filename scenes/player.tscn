@@ -4,7 +4,6 @@
 [ext_resource type="PackedScene" uid="uid://dvhdm6wl0gtsl" path="res://components/inventory_component.tscn" id="2_qhqgy"]
 [ext_resource type="PackedScene" uid="uid://d1gnb42u2flyj" path="res://components/hud_component.tscn" id="3_qlg0r"]
 [ext_resource type="Script" uid="uid://cc0qvycycungv" path="res://components/scripts/grab_drop_component.gd" id="4_dqkch"]
-[ext_resource type="Script" uid="uid://bel27q3f18ba3" path="res://components/scripts/hud_component.gd" id="4_tuyoq"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
 
@@ -56,7 +55,6 @@ mesh = SubResource("CapsuleMesh_qhqgy")
 unique_name_in_owner = true
 
 [node name="HudComponent" parent="." unique_id=225065007 instance=ExtResource("3_qlg0r")]
-script = ExtResource("4_tuyoq")
 
 [node name="GrabDropComponent" type="Node3D" parent="." unique_id=1660592755]
 transform = Transform3D(1.0000004, 0, 0, 0, 1, 0, 0, 0, 1.0000004, 0, 0.6611451, 0)

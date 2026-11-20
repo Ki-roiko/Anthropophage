@@ -2,7 +2,11 @@ class_name GrabDropComponent
 extends Node3D
 
 @onready var ray: RayCast3D = $RayCast3D
-@onready var inventory_component: InventoryComponent = $InventoryComponent
+@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
+@onready var drop_point: Marker3D = $DropMarker3D
+
+func _ready() -> void:
+	inventory_component.inventory.request_drop_item.connect(item_dropper)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -18,13 +22,13 @@ func drop_item() -> void:
 	if dragged == null or not is_instance_valid(dragged.stack):
 		return
 
-	var stack_index: int = inventory_component.stacks.find(dragged.stack)
+	var stack_index: int = inventory_component.inventory.stacks.find(dragged.stack)
 	if stack_index == -1:
 		return
 
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
-	inventory_component.drop_from_inventory(stack_index, 1, properties)
+	inventory_component.inventory.drop_from_inventory(stack_index, 1, properties)
 
 func grab_item():
 	if ray.is_colliding():
@@ -32,3 +36,38 @@ func grab_item():
 		if grabbing_item is WorldItem:
 			if not inventory_component.add_item(grabbing_item.item_id, 1, grabbing_item.item_properties): 
 				grabbing_item.queue_free()
+
+func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
+	if amount <= 0:
+		return
+
+	var definition = inventory_component.inventory.database.get_item(id)
+	if definition == null:
+		push_warning("Cannot drop item '%s': definition was not found." % id)
+		return
+
+	var path: String = str(definition.properties.get("dropped_item", ""))
+	if path.is_empty():
+		push_warning("Cannot drop item '%s': dropped_item is not configured." % id)
+		return
+
+	var packed_scene := load(path) as PackedScene
+	if packed_scene == null:
+		push_error("Cannot load dropped item scene: %s" % path)
+		return
+
+	var item := packed_scene.instantiate() as WorldItem
+	if item == null:
+		push_error("Dropped item scene does not have a WorldItem root: %s" % path)
+		return
+
+	var scene_root := get_tree().current_scene
+	if scene_root == null:
+		item.free()
+		push_error("Cannot drop item: current scene is null.")
+		return
+
+	item.item_id = id
+	item.item_properties = properties
+	scene_root.add_child(item)
+	item.global_transform = drop_point.global_transform

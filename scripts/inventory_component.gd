@@ -13,7 +13,12 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not inventory_layer.visible:
 		return
-	
+
+	if event.is_action_pressed("inventory_drop"):
+		drop_item()
+		get_viewport().set_input_as_handled()
+		return
+
 	if event.is_action_pressed("inventory_rotate"):
 		rotate_item()
 		get_viewport().set_input_as_handled()
@@ -69,3 +74,15 @@ func drop_item() -> void:
 
 func add_item(item_id: String, amount: int, properties: Dictionary) -> int:
 	return inventory.add(item_id, amount, properties)
+
+
+func get_dropped_item_scene_path(item_id: String) -> String:
+	var definition = inventory.database.get_item(item_id)
+
+	if definition == null:
+		return ""
+
+	return str(definition.properties.get("dropped_item", ""))
+
+func get_item_id(id: String) -> ItemDefinition:
+	return inventory.database.get_item(id)

@@ -1,7 +1,6 @@
 class_name HudComponent extends Node
 
 @onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
-@onready var player: CharacterBody3D = get_parent()
 @onready var hud_layer: CanvasLayer = $HudLayer
 
 func _ready() -> void:
@@ -15,10 +14,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if inventory_component.inventory_layer.visible:
 		return
-	
-	
-	if event is InputEventMouseMotion:
-		player.mouse_look(event)
+
 
 
 

@@ -12,23 +12,10 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("inventory_interact"):
 		grab_item()
-	
-	if event.is_action_pressed("inventory_drop"):
-		drop_item()
 
-func drop_item() -> void:
-	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
 
-	if dragged == null or not is_instance_valid(dragged.stack):
-		return
 
-	var stack_index: int = inventory_component.inventory.stacks.find(dragged.stack)
-	if stack_index == -1:
-		return
 
-	var properties: Dictionary = dragged.stack.properties.duplicate(true)
-	get_viewport().gui_cancel_drag()
-	inventory_component.inventory.drop_from_inventory(stack_index, 1, properties)
 
 func grab_item():
 	if ray.is_colliding():
@@ -37,18 +24,20 @@ func grab_item():
 			if not inventory_component.add_item(grabbing_item.item_id, 1, grabbing_item.item_properties): 
 				grabbing_item.queue_free()
 
+
+
 func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
 	if amount <= 0:
 		return
 
-	var definition = inventory_component.inventory.database.get_item(id)
+	var definition = inventory_component.get_item_id(id)
 	if definition == null:
 		push_warning("Cannot drop item '%s': definition was not found." % id)
 		return
 
-	var path: String = str(definition.properties.get("dropped_item", ""))
+	var path := inventory_component.get_dropped_item_scene_path(id)
 	if path.is_empty():
-		push_warning("Cannot drop item '%s': dropped_item is not configured." % id)
+		push_warning("Cannot find dropped item scene for '%s'." % id)
 		return
 
 	var packed_scene := load(path) as PackedScene

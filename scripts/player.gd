@@ -75,7 +75,14 @@ func _physics_process(delta: float) -> void:
 		moving(delta)
 		sprint_effect(delta)
 	fall_effect(delta)
-	
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if inventory_component.inventory_layer.visible:
+		return
+
+	if event is InputEventMouseMotion:
+		mouse_look(event)
 
 ####################################################################
 ############################## КАМЕРА ##############################

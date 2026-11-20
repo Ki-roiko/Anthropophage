@@ -1,3 +1,4 @@
+class_name InventoryComponent
 extends Node
 
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel

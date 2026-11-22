@@ -34,7 +34,7 @@ func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
 	if amount <= 0:
 		return
 
-	var path := inventory_component.get_item_scene_path(id)
+	var path := inventory_component.get_item_scene_path(id, "dropped_item")
 	if path.is_empty():
 		push_warning("Cannot find dropped item scene for '%s'." % id)
 		return

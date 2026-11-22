@@ -79,14 +79,17 @@ func drop_item() -> void:
 func add_item(item_id: String, amount: int, properties: Dictionary) -> int:
 	return inventory.add(item_id, amount, properties)
 
+func remoove_item(item_id: String, amount: int) -> int:
+	return inventory.remove(item_id, amount)
 
-func get_item_scene_path(item_id: String) -> String:
+
+func get_item_scene_path(item_id: String, properties: String) -> String:
 	var definition = inventory.database.get_item(item_id)
 
 	if definition == null:
 		return ""
 
-	return str(definition.properties.get("dropped_item", ""))
+	return str(definition.properties.get(properties, ""))
 
 func is_inventory_open() -> bool:
 	return inventory_layer.visible
@@ -107,3 +110,4 @@ func hold_item() -> void:
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
 	item_hold_component.spawn_holding_item(id, 1, properties)
+	remoove_item(id, 1)

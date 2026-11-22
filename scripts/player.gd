@@ -40,6 +40,7 @@ extends CharacterBody3D
 @onready var hud: CanvasLayer = $HUD
 @onready var inventory_component: InventoryComponent = $InventoryComponent
 @onready var grab_drop_component: GrabDropComponent = $GrabDropComponent
+@onready var item_hold_component: ItemHoldComponent = $ItemHoldComponent
 
 #############################################################
 #################### ПЕРЕМЕННЫЕ ДЛЯ СКРИПТА #################
@@ -113,6 +114,8 @@ func mouse_look(event: InputEventMouseMotion) -> void:
 	head.rotation.x = clampf(head.rotation.x, -PI / 2, PI / 2)
 	grab_drop_component.rotate_x(-event.relative.y * mouse_sensitivity)
 	grab_drop_component.rotation.x = clampf(grab_drop_component.rotation.x, -PI / 2, PI / 2)
+	item_hold_component.rotate_x(-event.relative.y * mouse_sensitivity)
+	item_hold_component.rotation.x = clampf(grab_drop_component.rotation.x, -PI / 2, PI / 2)
 
 # функция для покачивания камеры при ходьбе
 func head_bob(delta: float, frequency: float, amplitude: float, weight: float, rotation_amount: bool) -> void:

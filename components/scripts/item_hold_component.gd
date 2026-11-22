@@ -9,7 +9,7 @@ extends Node
 func hold_item(id: String, amount: int, properties) -> bool:
 
 	#иф определяет есть ли уже предмет в руке
-	if not holding_point.get_child_count() == 0:
+	if holding_point.get_child_count() == 0:
 		#если предмета нету
 		var path := inventory_component.get_item_scene_path(id, "holding_item")
 		var packed_scene := load(path) as PackedScene

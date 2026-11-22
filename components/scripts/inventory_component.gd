@@ -109,5 +109,5 @@ func hold_item() -> void:
 
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
-	item_hold_component.spawn_holding_item(id, 1, properties)
+	item_hold_component.hold_item(id, 1, properties)
 	remoove_item(id, 1)

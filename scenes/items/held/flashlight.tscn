@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://b00bjvncoiey0"]
+
+[ext_resource type="Script" uid="uid://b434qhpnpemla" path="res://scenes/items/held/flashlight.gd" id="1_3yojx"]
+[ext_resource type="PackedScene" uid="uid://coma7gcphhjti" path="res://models/nature/rock/other/rock1.glb" id="1_jak5t"]
+
+[node name="flashlight" type="Node3D" unique_id=1207738933]
+script = ExtResource("1_3yojx")
+
+[node name="rock12" parent="." unique_id=1591472650 instance=ExtResource("1_jak5t")]
+transform = Transform3D(0.335, 0, 0, 0, 0.335, 0, 0, 0, 0.335, 0, 0, 0)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1802311364]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.29436395)
+shadow_enabled = true
+distance_fade_enabled = true
+spot_range = 6.1156387
+spot_angle = 22.551485

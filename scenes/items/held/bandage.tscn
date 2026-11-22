@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://b00bjvncoiey0"]
-
-[ext_resource type="PackedScene" uid="uid://coma7gcphhjti" path="res://models/nature/rock/other/rock1.glb" id="1_jak5t"]
-
-[node name="Bandage" type="Node3D" unique_id=1207738933]
-
-[node name="rock12" parent="." unique_id=1591472650 instance=ExtResource("1_jak5t")]
-transform = Transform3D(0.335, 0, 0, 0, 0.335, 0, 0, 0, 0.335, 0, 0, 0)

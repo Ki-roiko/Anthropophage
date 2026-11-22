@@ -1,6 +1,7 @@
 [gd_resource type="InventoryDatabase" format=3 uid="uid://cbjlq2qaa28fs"]
 
 [ext_resource type="Texture2D" uid="uid://c7ut2s5k82y1e" path="res://296127.png" id="1_otxok"]
+[ext_resource type="Texture2D" uid="uid://b535u6efdrcbc" path="res://textures/grass/grass.png" id="2_6olr3"]
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_v1745"]
 id = "bandage"
@@ -33,5 +34,16 @@ properties = {
 "dropped_item": "res://scenes/items/world/WorldItem.tscn"
 }
 
+[sub_resource type="ItemDefinition" id="ItemDefinition_gudsu"]
+id = "flashlight"
+max_stack = 1
+name = "Фонарик"
+icon = ExtResource("2_6olr3")
+size = Vector2i(2, 1)
+properties = {
+"dropped_item": "res://scenes/items/world/WorldItem.tscn",
+"holding_item": "res://scenes/items/held/flashlight.tscn"
+}
+
 [resource]
-items = Array[ItemDefinition]([SubResource("ItemDefinition_v1745"), SubResource("ItemDefinition_otxok"), SubResource("ItemDefinition_6olr3")])
+items = Array[ItemDefinition]([SubResource("ItemDefinition_v1745"), SubResource("ItemDefinition_otxok"), SubResource("ItemDefinition_6olr3"), SubResource("ItemDefinition_gudsu")])

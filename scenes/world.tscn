@@ -58,7 +58,5 @@ transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.0
 
 [node name="WorldItem" parent="." unique_id=1515561717 instance=ExtResource("4_k0juu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -254.39316, 30.907665, -253.41808)
-item_id = "bandage"
+item_id = "flashlight"
 item_mesh = ExtResource("5_71j4m")
-
-[editable path="TowerNew"]

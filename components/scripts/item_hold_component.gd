@@ -10,12 +10,15 @@ func hold_item(id: String, amount: int, properties) -> bool:
 
 		var path := inventory_component.get_item_scene_path(id, "holding_item")
 		var packed_scene := load(path) as PackedScene
-		var item := packed_scene.instantiate()
-		item.properties = properties
-		holding_point.add_child(item)
-		item.transform = Transform3D.IDENTITY
-		item.global_transform = holding_point.global_transform
-		return true
+		if packed_scene:
+			var item := packed_scene.instantiate()
+			item.properties = properties
+			holding_point.add_child(item)
+			item.transform = Transform3D.IDENTITY
+			item.global_transform = holding_point.global_transform
+			return true
+		else:
+			return false
 	else:
 
 		var holding = holding_point.get_child(0)
@@ -26,16 +29,23 @@ func hold_item(id: String, amount: int, properties) -> bool:
 		
 		var path := inventory_component.get_item_scene_path(id, "holding_item")
 		var packed_scene := load(path) as PackedScene
-		var item := packed_scene.instantiate()
-		item.item_properties = properties
-		holding_point.add_child(item)
-		item.transform = Transform3D.IDENTITY
-		item.global_transform = holding_point.global_transform
-		return true
+		if packed_scene:
+			var item := packed_scene.instantiate()
+			item.properties = properties
+			holding_point.add_child(item)
+			item.transform = Transform3D.IDENTITY
+			item.global_transform = holding_point.global_transform
+			return true
+		else:
+			return false
 
 func unhold_item() -> bool:
 
-	var holding = holding_point.get_child(0)
+	var holding = holding_point.get_child_count()
+
+	if holding_point.get_child_count() == 0:
+		return false
+
 	if inventory_component.add_item(holding.id, 1, holding.properties) == 0:
 		holding.queue_free()
 		return true

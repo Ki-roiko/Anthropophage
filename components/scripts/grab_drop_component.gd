@@ -2,7 +2,7 @@ class_name GrabDropComponent
 extends Node3D
 
 @onready var ray: RayCast3D = $RayCast3D
-@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
+@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent") as InventoryComponent
 @onready var drop_point: Marker3D = $DropPoint
 
 func _ready() -> void:

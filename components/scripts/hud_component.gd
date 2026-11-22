@@ -1,6 +1,6 @@
 class_name HudComponent extends Node
 
-@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
+@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent") as InventoryComponent
 @onready var hud_layer: CanvasLayer = $HudLayer
 
 

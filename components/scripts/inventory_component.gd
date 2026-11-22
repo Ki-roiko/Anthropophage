@@ -4,7 +4,7 @@ extends Node
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel
 @onready var inventory: GridInventory = $Inventory
 @onready var inventory_layer: CanvasLayer = $InventoryLayer
-@onready var item_hold_component: ItemHoldComponent = $ItemHoldComponent
+@onready var item_hold_component: ItemHoldComponent = get_parent().get_node("ItemHoldComponent") as ItemHoldComponent
 
 func _ready() -> void:
 	inventory_panel.request_transfer_to.connect(_on_request_transfer_to)
@@ -102,8 +102,8 @@ func hold_item() -> void:
 	if dragged == null or not is_instance_valid(dragged.stack):
 		return
 
-	var id: int = inventory.stacks.find(dragged.id)
+	var id: String = dragged.stack.item_id
 
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
-	item_hold_component.spawn_holding_component(id, 1, properties)
+	item_hold_component.spawn_holding_item(id, 1, properties)

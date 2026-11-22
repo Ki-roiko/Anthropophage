@@ -1,8 +1,8 @@
 class_name ItemHoldComponent
 extends Node
 
-@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent")
-@onready var holding_point: Marker3D = $HoldingComponent
+@onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent") as InventoryComponent
+@onready var holding_point: Marker3D = $HoldingPoint
 
 func spawn_holding_item(id: String, amount: int, properties) -> void:
 
@@ -10,7 +10,6 @@ func spawn_holding_item(id: String, amount: int, properties) -> void:
 	var packed_scene := load(path) as PackedScene
 	var item := packed_scene.instantiate()
 
-	item.item_id = id
 	item.item_properties = properties
 
 	add_child(item)

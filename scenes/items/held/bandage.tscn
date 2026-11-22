@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://cm4oyw2b4bv04"]
+
+[ext_resource type="Script" uid="uid://drlirwvnufjcf" path="res://scenes/items/held/bandage.gd" id="1_3yojx"]
+[ext_resource type="PackedScene" uid="uid://bpmt63b6tuhte" path="res://models/nature/rock/other/rock4.glb" id="2_fbil5"]
+
+[node name="Bandage" type="Node3D" unique_id=1234021644]
+script = ExtResource("1_3yojx")
+
+[node name="rock42" parent="." unique_id=1042010097 instance=ExtResource("2_fbil5")]
+transform = Transform3D(0.175, 0, 0, 0, 0.175, 0, 0, 0, 0.175, 0, 0, 0)

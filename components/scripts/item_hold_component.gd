@@ -36,7 +36,7 @@ func hold_item(id: String, amount: int, properties) -> bool:
 func unhold_item() -> bool:
 
 	var holding = holding_point.get_child(0)
-	if inventory_component.add_item(holding.id, 1, holding.properties) >= 1:
+	if inventory_component.add_item(holding.id, 1, holding.properties) == 0:
 		holding.queue_free()
 		return true
 	else:

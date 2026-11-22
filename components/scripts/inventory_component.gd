@@ -11,13 +11,19 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+
+	if event.is_action_pressed("inventory_drop"):
+		if inventory_layer.visible:
+			drop_item()
+		elif not inventory_layer.visible:
+			item_hold_component.unhold_item()
+
+		get_viewport().set_input_as_handled()
+		return
+
 	if not inventory_layer.visible:
 		return
 
-	if event.is_action_pressed("inventory_drop"):
-		drop_item()
-		get_viewport().set_input_as_handled()
-		return
 
 	if event.is_action_pressed("inventory_rotate"):
 		rotate_item()
@@ -109,7 +115,7 @@ func hold_item() -> void:
 
 	var properties: Dictionary = dragged.stack.properties.duplicate(true)
 	get_viewport().gui_cancel_drag()
-	
+
 	if not item_hold_component.hold_item(id, 1, properties):
 		return
 	remoove_item(id, 1)

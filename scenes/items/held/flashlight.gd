@@ -1,8 +1,7 @@
-extends Node
+extends Node3D
 
 var id: String = "flashlight"
-@export var properties: Dictionary = {}
-
+var properties: Dictionary
 @onready var light : SpotLight3D = $SpotLight3D
 
 func _unhandled_input(event: InputEvent) -> void:

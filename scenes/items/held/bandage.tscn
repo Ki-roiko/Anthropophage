@@ -2,14 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://coma7gcphhjti" path="res://models/nature/rock/other/rock1.glb" id="1_jak5t"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_0cgy1"]
-radius = 1.0760846
-
-[node name="Bandage" type="RigidBody3D" unique_id=180072946]
-mass = 5.0
-gravity_scale = 0.0
+[node name="Bandage" type="Node3D" unique_id=1207738933]
 
 [node name="rock12" parent="." unique_id=1591472650 instance=ExtResource("1_jak5t")]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=932356463]
-shape = SubResource("SphereShape3D_0cgy1")
+transform = Transform3D(0.335, 0, 0, 0, 0.335, 0, 0, 0, 0.335, 0, 0, 0)

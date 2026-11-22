@@ -29,6 +29,9 @@ current = true
 fov = 90.0
 far = 3000.0
 
+[node name="HoldingPoint" type="Marker3D" parent="Head/Camera3D" unique_id=1008321411]
+transform = Transform3D(0.9999999, 0, 0, 0, 1, 0, 0, 0, 0.9999999, 0.7078545, -0.36244535, -0.51322997)
+
 [node name="Visor" type="MeshInstance3D" parent="Head" unique_id=400821456]
 transform = Transform3D(0.77262527, 0, 0, 0, 0.34440064, 0, 0, 0, 0.34243274, 0, 0.0324, -0.3560543)
 layers = 2
@@ -62,6 +65,3 @@ transform = Transform3D(1.0000005, 0, -4.656613e-10, 0, 1, 0, 4.656613e-10, 0, 1
 [node name="ItemHoldComponent" type="Node3D" parent="." unique_id=1267566962]
 transform = Transform3D(1.0000001, 0, 0, 0, 1, 0, 0, 0, 1.0000001, 0, 0.618, 0)
 script = ExtResource("5_qlg0r")
-
-[node name="HoldingPoint" type="Marker3D" parent="ItemHoldComponent" unique_id=1008321411]
-transform = Transform3D(0.9999999, 0, 0, 0, 1, 0, 0, 0, 0.9999999, 0.7078545, -0.3628453, -0.51322997)

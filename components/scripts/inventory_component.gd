@@ -88,7 +88,7 @@ func add_item(item_id: String, amount: int, properties: Dictionary) -> int:
 func remoove_item(item_id: String, amount: int) -> int:
 	return inventory.remove(item_id, amount)
 
-
+#даёт путь к сцене лежащего на полу или лежащего в руках предмета в зависимости от пропертиес которая указывается 
 func get_item_scene_path(item_id: String, properties: String) -> String:
 	var definition = inventory.database.get_item(item_id)
 
@@ -97,14 +97,16 @@ func get_item_scene_path(item_id: String, properties: String) -> String:
 
 	return str(definition.properties.get(properties, ""))
 
+#возвращает состояние видимости инвентаря
 func is_inventory_open() -> bool:
 	return inventory_layer.visible
 
-
+#переключает состояние видимости инвентаря
 func toggle_inventory() -> bool:
 	inventory_layer.visible = not inventory_layer.visible
 	return inventory_layer.visible
 
+#кладёт предмет из инвентаря в руки
 func hold_item() -> void:
 	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
 	

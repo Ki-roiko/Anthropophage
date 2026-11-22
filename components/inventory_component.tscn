@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dvhdm6wl0gtsl"]
 
-[ext_resource type="Script" uid="uid://cftrwcojjcx55" path="res://scripts/inventory_component.gd" id="1_8hp1q"]
+[ext_resource type="Script" path="res://scripts/inventory_component.gd" id="1_8hp1q"]
 [ext_resource type="InventoryDatabase" uid="uid://cbjlq2qaa28fs" path="res://resourses/inventory_database/anthropophage.tres" id="2_w04kx"]
 [ext_resource type="PackedScene" uid="uid://bjw6kfjl2v83p" path="res://scenes/ui/inventory/grid_inventory_panel.tscn" id="4_mryu8"]
 

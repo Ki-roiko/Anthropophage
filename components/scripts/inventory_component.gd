@@ -4,7 +4,7 @@ extends Node
 @onready var inventory_panel: GridInventoryPanel = $InventoryLayer/GridInventoryPanel
 @onready var inventory: GridInventory = $Inventory
 @onready var inventory_layer: CanvasLayer = $InventoryLayer
-
+@onready var item_hold_component: ItemHoldComponent = $ItemHoldComponent
 
 func _ready() -> void:
 	inventory_panel.request_transfer_to.connect(_on_request_transfer_to)
@@ -21,6 +21,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("inventory_rotate"):
 		rotate_item()
+		get_viewport().set_input_as_handled()
+
+	if event.is_action_pressed("inventory_hold"):
+		hold_item()
 		get_viewport().set_input_as_handled()
 
 
@@ -76,7 +80,7 @@ func add_item(item_id: String, amount: int, properties: Dictionary) -> int:
 	return inventory.add(item_id, amount, properties)
 
 
-func get_dropped_item_scene_path(item_id: String) -> String:
+func get_item_scene_path(item_id: String) -> String:
 	var definition = inventory.database.get_item(item_id)
 
 	if definition == null:
@@ -91,3 +95,15 @@ func is_inventory_open() -> bool:
 func toggle_inventory() -> bool:
 	inventory_layer.visible = not inventory_layer.visible
 	return inventory_layer.visible
+
+func hold_item() -> void:
+	var dragged := GridDraggableElementUI.get_grabbed_dragable() as GridItemStackUI
+	
+	if dragged == null or not is_instance_valid(dragged.stack):
+		return
+
+	var id: int = inventory.stacks.find(dragged.id)
+
+	var properties: Dictionary = dragged.stack.properties.duplicate(true)
+	get_viewport().gui_cancel_drag()
+	item_hold_component.spawn_holding_component(id, 1, properties)

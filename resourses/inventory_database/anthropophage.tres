@@ -10,7 +10,8 @@ name = "Бинт"
 icon = ExtResource("1_otxok")
 size = Vector2i(1, 2)
 properties = {
-"dropped_item": "res://scenes/items/world/WorldItem.tscn"
+"dropped_item": "res://scenes/items/world/WorldItem.tscn",
+"holding_item": "res://scenes/items/held/bandage.tscn"
 }
 
 [sub_resource type="ItemDefinition" id="ItemDefinition_otxok"]

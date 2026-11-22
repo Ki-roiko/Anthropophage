@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://dvhdm6wl0gtsl" path="res://components/inventory_component.tscn" id="2_qhqgy"]
 [ext_resource type="PackedScene" uid="uid://d1gnb42u2flyj" path="res://components/hud_component.tscn" id="3_qlg0r"]
 [ext_resource type="Script" uid="uid://cc0qvycycungv" path="res://components/scripts/grab_drop_component.gd" id="4_dqkch"]
+[ext_resource type="Script" uid="uid://dcrm2ks2to4fo" path="res://components/scripts/item_hold_component.gd" id="5_qlg0r"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_3vyb7"]
 
@@ -14,18 +15,9 @@
 [node name="Player" type="CharacterBody3D" unique_id=1854722376]
 transform = Transform3D(0.006963153, 0, -0.99997574, 0, 1, 0, 0.99997574, 0, 0.006963153, 0, 0, 0)
 script = ExtResource("1_3vyb7")
-mouse_sensitivity = null
 speed = 4.0
 sprint_speed = 8.0
 gravity = 24.5
-jump_velocity = null
-max_stamina = null
-sprint_duration = null
-exhaustion_duration = null
-stamina_recovery_duration = null
-standard_fov = null
-sprint_fov = null
-fov_change_speed = null
 
 [node name="Head" type="Node3D" parent="." unique_id=1971699787]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6176, 0)
@@ -66,3 +58,9 @@ target_position = Vector3(0, 0, -2.5)
 
 [node name="DropPoint" type="Marker3D" parent="GrabDropComponent" unique_id=634297511]
 transform = Transform3D(1.0000005, 0, -4.656613e-10, 0, 1, 0, 4.656613e-10, 0, 1.0000005, 0.012469179, 0, -1.7906941)
+
+[node name="ItemHoldComponent" type="Node" parent="." unique_id=1893514172]
+script = ExtResource("5_qlg0r")
+
+[node name="HodingPoint" type="Marker3D" parent="ItemHoldComponent" unique_id=1008321411]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.69415855, 0.4011628, -0.51332545)

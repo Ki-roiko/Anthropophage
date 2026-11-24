@@ -136,13 +136,21 @@ func item_dragging(delta: float) -> void:
 
 	var error: Vector3 = drag_target_point - grab_point
 
-	# Сила растёт с массой, но медленнее, чем сама масса.
-	# Поэтому тяжёлые тела разгоняются медленнее и сильнее провисают под гравитацией.
-	var mass_scale: float = pow(maxf(dragged_item.mass, 0.01), mass_influence)
+	# При mass_influence = 0 сила растёт пропорционально массе:
+	# предметы разной массы получают примерно одинаковое ускорение.
+	# При mass_influence = 1 сила растёт только как sqrt(mass):
+	# тяжёлые предметы заметно медленнее разгоняются и поднимаются.
+	var body_mass: float = maxf(dragged_item.mass, 0.01)
+	var stiffness_scale: float = pow(body_mass, 1.0 - mass_influence * 0.5)
+
+	# Подбираем демпфирование с учётом эффективной жёсткости и массы,
+	# чтобы тяжёлые предметы не начинали чрезмерно раскачиваться.
+	var damping_scale: float = sqrt(body_mass * stiffness_scale)
 
 	var force: Vector3 = (
-		error * drag_stiffness - point_velocity * drag_damping
-	) * mass_scale
+		error * drag_stiffness * stiffness_scale
+		- point_velocity * drag_damping * damping_scale
+	)
 
 	# Ограничиваем силу, чтобы резкие движения камеры не дёргали физику.
 	force = force.limit_length(max_drag_force)

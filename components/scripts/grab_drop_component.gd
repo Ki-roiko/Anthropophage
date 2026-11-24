@@ -34,7 +34,7 @@ func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
 	if amount <= 0:
 		return
 
-	var path := inventory_component.get_item_scene_path(id, "dropped_item")
+	var path := inventory_component.get_item_properties(id, "dropped_item")
 	if path.is_empty():
 		push_warning("Cannot find dropped item scene for '%s'." % id)
 		return
@@ -55,6 +55,7 @@ func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
 		push_error("Cannot drop item: current scene is null.")
 		return
 
+	item.item_mesh = inventory_component.get_item_properties(id, "dropped_mesh")
 	item.item_id = id
 	item.item_properties = properties
 	scene_root.add_child(item)

@@ -135,8 +135,8 @@ func add_item(item_id: String, amount: int, properties: Dictionary) -> int:
 func remoove_item(item_id: String, amount: int) -> int:
 	return inventory.remove(item_id, amount)
 
-#даёт путь к сцене лежащего на полу или лежащего в руках предмета в зависимости от пропертиес которая указывается
-func get_item_scene_path(item_id: String, properties: String) -> String:
+#даёт значение properties
+func get_item_properties(item_id: String, properties: String) -> String:
 	var definition = inventory.database.get_item(item_id)
 
 	if definition == null:

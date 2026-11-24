@@ -4,13 +4,9 @@
 
 [sub_resource type="BoxMesh" id="BoxMesh_0cgy1"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_af4pb"]
-
 [node name="WorldItem" type="RigidBody3D" unique_id=1515561717 groups=["world_item"]]
 script = ExtResource("1_wcxom")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2127514287]
+visible = false
 mesh = SubResource("BoxMesh_0cgy1")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1303514878]
-shape = SubResource("BoxShape3D_af4pb")

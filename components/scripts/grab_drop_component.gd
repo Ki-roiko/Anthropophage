@@ -21,7 +21,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		grab_item()
 		get_viewport().set_input_as_handled()
 
-	if event.is_action_pressed("left-click"):
+func _physics_process(delta: float) -> void:
+	if inventory_component.is_inventory_open():
+		stop_item_dragging()
+		return
+	if Input.is_action_pressed("left_click"):
 		item_dragging()
 	else:
 		stop_item_dragging()

@@ -2,11 +2,10 @@ class_name GrabDropComponent
 extends Node3D
 
 @export_group("Перетаскивание предметов")
-@export_range(5.0, 200.0, 1.0) var drag_stiffness: float = 65.0
-@export_range(1.0, 60.0, 1.0) var drag_damping: float = 18.0
-@export_range(1.0, 40.0, 0.5) var target_smoothing: float = 14.0
-@export_range(0.0, 1.0, 0.05) var mass_influence: float = 0.65
-@export_range(100.0, 10000.0, 100.0) var max_drag_force: float = 2500.0
+@export_range(50.0, 1000.0, 10.0) var drag_stiffness: float = 280.0
+@export_range(0.2, 1.5, 0.05) var damping_ratio: float = 0.9
+@export_range(1.0, 30.0, 0.5) var target_smoothing: float = 9.0
+@export_range(1.0, 100.0, 1.0) var max_lift_mass_kg: float = 35.0
 
 @onready var ray: RayCast3D = $RayCast3D
 @onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent") as InventoryComponent
@@ -104,6 +103,9 @@ func item_dragging(delta: float) -> void:
 			return
 
 		dragged_item = collider as RigidBody3D
+		if dragged_item.freeze:
+			dragged_item = null
+			return
 
 		# Сохраняем именно точку поверхности, в которую попал RayCast.
 		var hit_point: Vector3 = ray.get_collision_point()
@@ -136,24 +138,22 @@ func item_dragging(delta: float) -> void:
 
 	var error: Vector3 = drag_target_point - grab_point
 
-	# При mass_influence = 0 сила растёт пропорционально массе:
-	# предметы разной массы получают примерно одинаковое ускорение.
-	# При mass_influence = 1 сила растёт только как sqrt(mass):
-	# тяжёлые предметы заметно медленнее разгоняются и поднимаются.
+	# Жёсткость задаётся в Н/м и НЕ умножается на массу:
+	# одинаковая ошибка положения даёт одинаковую силу, поэтому тяжёлое тело
+	# получает меньшее ускорение и заметно отстаёт от точки захвата.
 	var body_mass: float = maxf(dragged_item.mass, 0.01)
-	var stiffness_scale: float = pow(body_mass, 1.0 - mass_influence * 0.5)
 
-	# Подбираем демпфирование с учётом эффективной жёсткости и массы,
-	# чтобы тяжёлые предметы не начинали чрезмерно раскачиваться.
-	var damping_scale: float = sqrt(body_mass * stiffness_scale)
+	# Критическое демпфирование зависит от массы: c = 2 * sqrt(k * m) * zeta.
+	# Это гасит раскачивание, не превращая движение в мгновенное прилипание.
+	var damping: float = 2.0 * sqrt(drag_stiffness * body_mass) * damping_ratio
 
-	var force: Vector3 = (
-		error * drag_stiffness * stiffness_scale
-		- point_velocity * drag_damping * damping_scale
-	)
+	var force: Vector3 = error * drag_stiffness - point_velocity * damping
 
-	# Ограничиваем силу, чтобы резкие движения камеры не дёргали физику.
-	force = force.limit_length(max_drag_force)
+	# Сила игрока конечна. 35 кг — приблизительный предел веса,
+	# который игрок способен полностью поднять при стандартной гравитации.
+	var world_gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
+	var max_force: float = max_lift_mass_kg * world_gravity
+	force = force.limit_length(max_force)
 
 	# Прикладываем силу в точке захвата, а не в центре тела.
 	dragged_item.apply_force(force, offset)

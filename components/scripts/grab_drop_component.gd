@@ -2,10 +2,11 @@ class_name GrabDropComponent
 extends Node3D
 
 @export_group("Перетаскивание предметов")
-@export_range(50.0, 1000.0, 10.0) var drag_stiffness: float = 280.0
-@export_range(0.2, 1.5, 0.05) var damping_ratio: float = 0.9
-@export_range(1.0, 30.0, 0.5) var target_smoothing: float = 9.0
-@export_range(1.0, 100.0, 1.0) var max_lift_mass_kg: float = 35.0
+@export_range(25.0, 500.0, 5.0) var drag_stiffness: float = 160.0
+@export_range(0.5, 1.5, 0.05) var damping_ratio: float = 1.0
+@export_range(1.0, 20.0, 0.5) var target_smoothing: float = 7.0
+@export_range(1.0, 100.0, 1.0) var max_lift_mass_kg: float = 25.0
+@export_range(5.0, 30.0, 1.0) var max_drag_acceleration: float = 14.0
 
 @onready var ray: RayCast3D = $RayCast3D
 @onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent") as InventoryComponent
@@ -107,6 +108,11 @@ func item_dragging(delta: float) -> void:
 			dragged_item = null
 			return
 
+		# Не даём захваченному предмету упираться в капсулу самого игрока.
+		var player_body := get_parent() as PhysicsBody3D
+		if player_body != null:
+			dragged_item.add_collision_exception_with(player_body)
+
 		# Сохраняем именно точку поверхности, в которую попал RayCast.
 		var hit_point: Vector3 = ray.get_collision_point()
 		dragged_local_point = dragged_item.to_local(hit_point)
@@ -138,26 +144,44 @@ func item_dragging(delta: float) -> void:
 
 	var error: Vector3 = drag_target_point - grab_point
 
-	# Жёсткость задаётся в Н/м и НЕ умножается на массу:
-	# одинаковая ошибка положения даёт одинаковую силу, поэтому тяжёлое тело
-	# получает меньшее ускорение и заметно отстаёт от точки захвата.
 	var body_mass: float = maxf(dragged_item.mass, 0.01)
 
-	# Критическое демпфирование зависит от массы: c = 2 * sqrt(k * m) * zeta.
-	# Это гасит раскачивание, не превращая движение в мгновенное прилипание.
-	var damping: float = 2.0 * sqrt(drag_stiffness * body_mass) * damping_ratio
+	# Учитываем вращение: при захвате за край точка имеет не только
+	# поступательную, но и угловую скорость.
+	var damping_axis := error.normalized()
+	if damping_axis.is_zero_approx():
+		damping_axis = point_velocity.normalized()
 
+	var inverse_inertia := dragged_item.get_inverse_inertia_tensor()
+	var lever_cross_axis := offset.cross(damping_axis)
+	var inverse_effective_mass := (
+		1.0 / body_mass
+		+ lever_cross_axis.dot(inverse_inertia * lever_cross_axis)
+	)
+	var effective_mass := 1.0 / maxf(inverse_effective_mass, 0.0001)
+
+	# Демпфирование с учётом эффективной массы точки захвата.
+	var damping: float = 2.0 * sqrt(drag_stiffness * effective_mass) * damping_ratio
 	var force: Vector3 = error * drag_stiffness - point_velocity * damping
 
-	# Сила игрока конечна. 35 кг — приблизительный предел веса,
-	# который игрок способен полностью поднять при стандартной гравитации.
+	# Ограничиваем ускорение лёгких тел, иначе даже небольшой предмет
+	# может получить чрезмерную скорость от пружины.
+	# Отдельный предел по массе задаёт максимальный вес, который можно поднять.
 	var world_gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
-	var max_force: float = max_lift_mass_kg * world_gravity
+	var max_force_by_acceleration: float = body_mass * max_drag_acceleration
+	var max_force_by_lift_mass: float = max_lift_mass_kg * world_gravity
+	var max_force: float = minf(max_force_by_acceleration, max_force_by_lift_mass)
 	force = force.limit_length(max_force)
 
-	# Прикладываем силу в точке захвата, а не в центре тела.
+	# apply_force принимает смещение от начала тела в мировых координатах.
+	# Так сила остаётся приложенной именно в точке, куда попал RayCast.
 	dragged_item.apply_force(force, offset)
 
 
 func stop_item_dragging() -> void:
+	if is_instance_valid(dragged_item):
+		var player_body := get_parent() as PhysicsBody3D
+		if player_body != null:
+			dragged_item.remove_collision_exception_with(player_body)
+
 	dragged_item = null

@@ -12,6 +12,7 @@ icon = ExtResource("1_otxok")
 size = Vector2i(1, 2)
 properties = {
 "dropped_item": "res://scenes/items/world/WorldItem.tscn",
+"dropped_mesh": "res://models/nature/rock/other/rock12.glb",
 "holding_item": "res://scenes/items/held/bandage.tscn"
 }
 
@@ -23,6 +24,7 @@ icon = ExtResource("2_6olr3")
 size = Vector2i(2, 1)
 properties = {
 "dropped_item": "res://scenes/items/world/WorldItem.tscn",
+"dropped_mesh": "res://models/nature/rock/other/rock13.glb",
 "holding_item": "res://scenes/items/held/flashlight.tscn"
 }
 

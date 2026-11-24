@@ -1,6 +1,13 @@
 class_name GrabDropComponent
 extends Node3D
 
+@export_group("Перетаскивание предметов")
+@export_range(5.0, 200.0, 1.0) var drag_stiffness: float = 65.0
+@export_range(1.0, 60.0, 1.0) var drag_damping: float = 18.0
+@export_range(1.0, 40.0, 0.5) var target_smoothing: float = 14.0
+@export_range(0.0, 1.0, 0.05) var mass_influence: float = 0.65
+@export_range(100.0, 10000.0, 100.0) var max_drag_force: float = 2500.0
+
 @onready var ray: RayCast3D = $RayCast3D
 @onready var inventory_component: InventoryComponent = get_parent().get_node("InventoryComponent") as InventoryComponent
 @onready var drop_point: Marker3D = $DropPoint
@@ -8,6 +15,8 @@ extends Node3D
 var dragged_item: RigidBody3D
 var dragged_local_point: Vector3
 var drag_distance: float
+var drag_target_point: Vector3
+
 
 func _ready() -> void:
 	inventory_component.inventory.request_drop_item.connect(item_dropper)
@@ -21,26 +30,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		grab_item()
 		get_viewport().set_input_as_handled()
 
+
 func _physics_process(delta: float) -> void:
 	if inventory_component.is_inventory_open():
 		stop_item_dragging()
 		return
+
 	if Input.is_action_pressed("left_click"):
-		item_dragging()
+		item_dragging(delta)
 	else:
 		stop_item_dragging()
 
 
+func grab_item() -> void:
+	ray.force_raycast_update()
 
+	if not ray.is_colliding():
+		return
 
-
-func grab_item():
-	if ray.is_colliding():
-		var grabbing_item = ray.get_collider()
-		if grabbing_item is WorldItem:
-			if inventory_component.add_item(grabbing_item.item_id, 1, grabbing_item.item_properties) == 0:
-				grabbing_item.queue_free()
-
+	var grabbing_item = ray.get_collider()
+	if grabbing_item is WorldItem:
+		if inventory_component.add_item(
+			grabbing_item.item_id,
+			1,
+			grabbing_item.item_properties
+		) == 0:
+			grabbing_item.queue_free()
 
 
 func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
@@ -75,64 +90,66 @@ func item_dropper(id: String, amount: int, properties: Dictionary) -> void:
 	item.global_transform = drop_point.global_transform
 
 
-func item_dragging() -> void:
-	# Если предмет ещё не захвачен — пробуем захватить его
+func item_dragging(delta: float) -> void:
+	# Захватываем новый объект только если это RigidBody3D.
 	if not is_instance_valid(dragged_item):
 		dragged_item = null
-
 		ray.force_raycast_update()
 
 		if not ray.is_colliding():
 			return
 
-		var hit_point: Vector3 = ray.get_collision_point()
-		var collider := ray.get_collider() as RigidBody3D
-
-		if collider == null:
+		var collider: Object = ray.get_collider()
+		if not (collider is RigidBody3D):
 			return
 
-		dragged_item = collider
+		dragged_item = collider as RigidBody3D
 
-		# Запоминаем точку захвата относительно предмета
+		# Сохраняем именно точку поверхности, в которую попал RayCast.
+		var hit_point: Vector3 = ray.get_collision_point()
 		dragged_local_point = dragged_item.to_local(hit_point)
-
-		# Запоминаем дистанцию от камеры до точки захвата
 		drag_distance = ray.global_position.distance_to(hit_point)
 
+		# Начинаем сглаживание с исходной точки, чтобы не было рывка.
+		drag_target_point = hit_point
 		dragged_item.sleeping = false
 
-	# Получаем актуальное положение точки захвата
+	# Получаем текущее положение сохранённой точки захвата в мировых координатах.
 	var grab_point: Vector3 = dragged_item.to_global(dragged_local_point)
 
-	# Получаем направление луча
-	var direction: Vector3 = (
-		ray.global_transform.basis * ray.target_position
-	).normalized()
+	# Находим желаемое положение точки на прежнем расстоянии от RayCast.
+	var direction: Vector3 = (ray.global_basis * ray.target_position).normalized()
+	var desired_target_point: Vector3 = ray.global_position + direction * drag_distance
 
-	# Вычисляем желаемое положение точки захвата
-	var target_point: Vector3 = (
-		ray.global_position + direction * drag_distance
-	)
+	# Плавно перемещаем цель вслед за камерой.
+	var smoothing_weight: float = 1.0 - exp(-target_smoothing * delta)
+	drag_target_point = drag_target_point.lerp(desired_target_point, smoothing_weight)
 
-	# Смещение точки захвата относительно центра тела
+	# Смещение точки захвата относительно начала RigidBody3D.
 	var offset: Vector3 = grab_point - dragged_item.global_position
 
-	# Вычисляем скорость точки с учётом вращения предмета
+	# Скорость именно точки захвата, включая вращение тела.
 	var point_velocity: Vector3 = (
 		dragged_item.linear_velocity
 		+ dragged_item.angular_velocity.cross(offset)
 	)
 
-	# Вычисляем отклонение от желаемого положения
-	var error: Vector3 = target_point - grab_point
+	var error: Vector3 = drag_target_point - grab_point
 
-	# Рассчитываем силу притяжения и демпфирования
+	# Сила растёт с массой, но медленнее, чем сама масса.
+	# Поэтому тяжёлые тела разгоняются медленнее и сильнее провисают под гравитацией.
+	var mass_scale: float = pow(maxf(dragged_item.mass, 0.01), mass_influence)
+
 	var force: Vector3 = (
-		error * 30.0 - point_velocity * 11.0
-	) * dragged_item.mass
+		error * drag_stiffness - point_velocity * drag_damping
+	) * mass_scale
 
-	# Прикладываем силу непосредственно в точке захвата
+	# Ограничиваем силу, чтобы резкие движения камеры не дёргали физику.
+	force = force.limit_length(max_drag_force)
+
+	# Прикладываем силу в точке захвата, а не в центре тела.
 	dragged_item.apply_force(force, offset)
+
 
 func stop_item_dragging() -> void:
 	dragged_item = null
